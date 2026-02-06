@@ -1,0 +1,61 @@
+# Aqlli Shahar Trafik Boshqaruv Tizimi Konfiguratsiyasi
+
+# Shahar sozlamalari
+city:
+  name: "Toshkent"
+  center:
+    lat: 41.2995
+    lng: 69.2401
+  timezone: "Asia/Tashkent"
+
+# Simulyatsiya sozlamalari
+simulation:
+  time_step: 1  # sekund
+  vehicle_count: 500
+  intersection_count: 20
+  emergency_vehicle_count: 10
+  
+# GPS sozlamalari
+gps:
+  update_interval: 1  # sekund
+  accuracy: 2.5  # metr
+  
+# Svetofor sozlamalari
+traffic_signals:
+  min_green_time: 15  # sekund
+  max_green_time: 90  # sekund
+  yellow_time: 3  # sekund
+  all_red_time: 2  # sekund
+
+# Maxsus transport ustuvorligi
+emergency:
+  preemption_time: 30  # sekund oldin
+  notification_radius: 500  # metr
+  priority_levels:
+    ambulance: 1
+    fire_truck: 1
+    police: 2
+    vip: 3
+
+# API sozlamalari
+api:
+  host: "0.0.0.0"
+  port: 8000
+  cors_origins: ["*"]
+
+# MQTT sozlamalari
+mqtt:
+  broker: "localhost"
+  port: 1883
+  topic_prefix: "traffic"
+
+# Database sozlamalari
+database:
+  type: "sqlite"
+  path: "data/traffic.db"
+
+# AI Model sozlamalari
+ai:
+  prediction_horizon: 15  # daqiqa
+  training_epochs: 100
+  batch_size: 32

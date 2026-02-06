@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🚦 Aqlli Shahar Trafik Boshqaruv Tizimi</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-left">
+            <h1>🚦 Trafik Boshqaruv Tizimi</h1>
+            <span class="status-badge" id="connectionStatus">⏳ Ulanmoqda...</span>
+        </div>
+        <div class="header-right">
+            <span id="currentTime"></span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Sidebar Stats -->
+        <aside class="sidebar">
+            <div class="stat-card">
+                <div class="stat-icon">🚗</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="vehicleCount">0</span>
+                    <span class="stat-label">Transport</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⚡</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="avgSpeed">0</span>
+                    <span class="stat-label">O'rtacha tezlik (km/h)</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="congestionLevel">0%</span>
+                    <span class="stat-label">Tirbandlik</span>
+                </div>
+            </div>
+            
+            <div class="stat-card emergency">
+                <div class="stat-icon">🚨</div>
+                <div class="stat-content">
+                    <span class="stat-value" id="emergencyCount">0</span>
+                    <span class="stat-label">Maxsus transport</span>
+                </div>
+            </div>
+            
+            <!-- Traffic by Status -->
+            <div class="status-breakdown">
+                <h3>Yo'l holati</h3>
+                <div class="status-item free">
+                    <span class="status-dot"></span>
+                    <span>Erkin</span>
+                    <span class="status-count" id="freeCount">0</span>
+                </div>
+                <div class="status-item light">
+                    <span class="status-dot"></span>
+                    <span>Yengil</span>
+                    <span class="status-count" id="lightCount">0</span>
+                </div>
+                <div class="status-item moderate">
+                    <span class="status-dot"></span>
+                    <span>O'rtacha</span>
+                    <span class="status-count" id="moderateCount">0</span>
+                </div>
+                <div class="status-item heavy">
+                    <span class="status-dot"></span>
+                    <span>Tirbandlik</span>
+                    <span class="status-count" id="heavyCount">0</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Map Section -->
+            <section class="map-section">
+                <div class="section-header">
+                    <h2>🗺️ Real-vaqt Xarita</h2>
+                    <div class="map-controls">
+                        <button class="btn" onclick="toggleVehicles()">
+                            <span id="vehicleToggle">🚗 Yashirish</span>
+                        </button>
+                        <button class="btn" onclick="toggleHeatmap()">
+                            <span id="heatmapToggle">🌡️ Tirbandlik</span>
+                        </button>
+                        <button class="btn btn-emergency" onclick="simulateEmergency()">
+                            🚑 Tez yordam
+                        </button>
+                    </div>
+                </div>
+                <div id="map"></div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="charts-section">
+                <div class="chart-container">
+                    <h3>📈 Tirbandlik dinamikasi</h3>
+                    <canvas id="congestionChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3>🚗 Tezlik taqsimoti</h3>
+                    <canvas id="speedChart"></canvas>
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Panel - Events -->
+        <aside class="events-panel">
+            <h3>📋 Hodisalar</h3>
+            <div class="events-list" id="eventsList">
+                <div class="event-item info">
+                    <span class="event-time">--:--</span>
+                    <span class="event-text">Tizim ishga tushmoqda...</span>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Emergency Alert Modal -->
+    <div class="modal" id="emergencyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>🚨 FAVQULODDA SIGNAL</h3>
+            </div>
+            <div class="modal-body">
+                <p id="emergencyMessage">Tez yordam yaqinlashmoqda!</p>
+                <div class="emergency-info">
+                    <div><strong>Transport:</strong> <span id="emergencyVehicle">-</span></div>
+                    <div><strong>Yo'nalish:</strong> <span id="emergencyDirection">-</span></div>
+                    <div><strong>ETA:</strong> <span id="emergencyETA">-</span></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" onclick="closeEmergencyModal()">Tushundim</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/charts.js"></script>
+</body>
+</html>
