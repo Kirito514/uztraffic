@@ -354,11 +354,35 @@ async def websocket_endpoint(websocket: WebSocket):
             if device_manager:
                 device_manager.update_all_devices(1.0)
             
+            # Vehicles ma'lumotini olish
+            vehicles_data = []
+            if device_manager:
+                for device in device_manager.get_all_devices():
+                    gps = device._create_gps_data()
+                    
+                    # Traffic analyzer'ga ma'lumot uzatish (Statistika uchun)
+                    if traffic_analyzer:
+                        traffic_analyzer.update_vehicle(
+                            gps.vehicle_id, gps.latitude, gps.longitude, gps.speed
+                        )
+                        
+                    vehicles_data.append({
+                        "id": gps.vehicle_id,
+                        "lat": gps.latitude,
+                        "lng": gps.longitude,
+                        "speed": gps.speed,
+                        "type": gps.vehicle_type.value if hasattr(gps, 'vehicle_type') else 'car',
+                        "direction": gps.heading
+                    })
+            
             if traffic_analyzer:
                 overview = traffic_analyzer.get_city_overview()
                 await websocket.send_json({
                     "type": "traffic_update",
-                    "data": overview
+                    "data": {
+                        **overview,
+                        "vehicles": vehicles_data
+                    }
                 })
             
             await asyncio.sleep(1)
