@@ -16,8 +16,16 @@ const chartData = {
 
 // Grafiklarni ishga tushirish
 function initCharts() {
+    const congestionEl = document.getElementById('congestionChart');
+    const speedEl = document.getElementById('speedChart');
+
+    if (!congestionEl || !speedEl) {
+        console.log('📊 Grafik elementlari topilmadi. O\'tkazib yuborilmoqda.');
+        return;
+    }
+
     // Tirbandlik grafigi
-    const congestionCtx = document.getElementById('congestionChart').getContext('2d');
+    const congestionCtx = congestionEl.getContext('2d');
     congestionChart = new Chart(congestionCtx, {
         type: 'line',
         data: {
@@ -36,7 +44,7 @@ function initCharts() {
     });
 
     // Tezlik grafigi
-    const speedCtx = document.getElementById('speedChart').getContext('2d');
+    const speedCtx = speedEl.getContext('2d');
     speedChart = new Chart(speedCtx, {
         type: 'line',
         data: {

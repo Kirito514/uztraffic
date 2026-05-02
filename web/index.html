@@ -1,163 +1,96 @@
 <!DOCTYPE html>
 <html lang="uz">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🚦 Aqlli Shahar Trafik Boshqaruv Tizimi</title>
-    
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Styles -->
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OQIM AI - Aqlli Shahar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&family=Onest:wght@900&display=swap"
+    rel="stylesheet">
+  <link rel="icon" type="image/png" href="./AI Chip.png">
+  <link rel="stylesheet" href="css/landing.css">
 </head>
+
 <body>
-    <!-- Header -->
-    <header class="header">
-        <div class="header-left">
-            <h1>🚦 Trafik Boshqaruv Tizimi</h1>
-            <span class="status-badge" id="connectionStatus">⏳ Ulanmoqda...</span>
-        </div>
-        <div class="header-right">
-            <span id="currentTime"></span>
-        </div>
-    </header>
 
-    <!-- Main Container -->
-    <div class="container">
-        <!-- Sidebar Stats -->
-        <aside class="sidebar">
-            <div class="stat-card">
-                <div class="stat-icon">🚗</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="vehicleCount">0</span>
-                    <span class="stat-label">Transport</span>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">⚡</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="avgSpeed">0</span>
-                    <span class="stat-label">O'rtacha tezlik (km/h)</span>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-icon">📊</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="congestionLevel">0%</span>
-                    <span class="stat-label">Tirbandlik</span>
-                </div>
-            </div>
-            
-            <div class="stat-card emergency">
-                <div class="stat-icon">🚨</div>
-                <div class="stat-content">
-                    <span class="stat-value" id="emergencyCount">0</span>
-                    <span class="stat-label">Maxsus transport</span>
-                </div>
-            </div>
-            
-            <!-- Traffic by Status -->
-            <div class="status-breakdown">
-                <h3>Yo'l holati</h3>
-                <div class="status-item free">
-                    <span class="status-dot"></span>
-                    <span>Erkin</span>
-                    <span class="status-count" id="freeCount">0</span>
-                </div>
-                <div class="status-item light">
-                    <span class="status-dot"></span>
-                    <span>Yengil</span>
-                    <span class="status-count" id="lightCount">0</span>
-                </div>
-                <div class="status-item moderate">
-                    <span class="status-dot"></span>
-                    <span>O'rtacha</span>
-                    <span class="status-count" id="moderateCount">0</span>
-                </div>
-                <div class="status-item heavy">
-                    <span class="status-dot"></span>
-                    <span>Tirbandlik</span>
-                    <span class="status-count" id="heavyCount">0</span>
-                </div>
-            </div>
-        </aside>
+  <div class="blob-container">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+  </div>
 
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Map Section -->
-            <section class="map-section">
-                <div class="section-header">
-                    <h2>🗺️ Real-vaqt Xarita</h2>
-                    <div class="map-controls">
-                        <button class="btn" onclick="toggleVehicles()">
-                            <span id="vehicleToggle">🚗 Yashirish</span>
-                        </button>
-                        <button class="btn" onclick="toggleHeatmap()">
-                            <span id="heatmapToggle">🌡️ Tirbandlik</span>
-                        </button>
-                        <button class="btn btn-emergency" onclick="simulateEmergency()">
-                            🚑 Tez yordam
-                        </button>
-                    </div>
-                </div>
-                <div id="map"></div>
-            </section>
+  <nav class="navbar">
+    <div class="logo">
+      <span class="logo-text">OQIM</span>
+      <img src="./AI Chip.png" alt="Oqim Logo" class="logo-icon-img">
+    </div>
+    <a href="dashboard.html" class="nav-btn">Tizimga kirish</a>
+  </nav>
 
-            <!-- Charts Section -->
-            <section class="charts-section">
-                <div class="chart-container">
-                    <h3>📈 Tirbandlik dinamikasi</h3>
-                    <canvas id="congestionChart"></canvas>
-                </div>
-                <div class="chart-container">
-                    <h3>🚗 Tezlik taqsimoti</h3>
-                    <canvas id="speedChart"></canvas>
-                </div>
-            </section>
-        </main>
+  <header class="hero">
+    <div class="hero-content">
+      <div class="badge">Shahar Trafikini Boshqarishning Kelajagi</div>
+      <h1>Trafikni <span class="gradient-text">Sun'iy Intellekt</span> bilan boshqaring</h1>
+      <p>Real vaqt rejimidagi monitoring, K-Means orqali klasterlash va NLP yordamchisi bilan jihozlangan eng
+        innovatsion aqlli shahar platformasi.</p>
 
-        <!-- Right Panel - Events -->
-        <aside class="events-panel">
-            <h3>📋 Hodisalar</h3>
-            <div class="events-list" id="eventsList">
-                <div class="event-item info">
-                    <span class="event-time">--:--</span>
-                    <span class="event-text">Tizim ishga tushmoqda...</span>
-                </div>
-            </div>
-        </aside>
+      <div class="cta-group">
+        <a href="dashboard.html" class="btn btn-primary">Dashboardni Ochish <span class="arrow">→</span></a>
+      </div>
     </div>
 
-    <!-- Emergency Alert Modal -->
-    <div class="modal" id="emergencyModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>🚨 FAVQULODDA SIGNAL</h3>
-            </div>
-            <div class="modal-body">
-                <p id="emergencyMessage">Tez yordam yaqinlashmoqda!</p>
-                <div class="emergency-info">
-                    <div><strong>Transport:</strong> <span id="emergencyVehicle">-</span></div>
-                    <div><strong>Yo'nalish:</strong> <span id="emergencyDirection">-</span></div>
-                    <div><strong>ETA:</strong> <span id="emergencyETA">-</span></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn" onclick="closeEmergencyModal()">Tushundim</button>
-            </div>
+    <div class="hero-visual">
+      <div class="glass-card main-card">
+        <div class="card-header">
+          <div class="dots"><span></span><span></span><span></span></div>
+          <span class="status">Live Status</span>
         </div>
+        <div class="mock-map">
+          <div class="pulse-point p1"></div>
+          <div class="pulse-point p2"></div>
+          <div class="pulse-point p3 alert"></div>
+        </div>
+        <div class="stats-row">
+          <div class="stat"><span>O'rtacha Tezlik</span><strong>42 km/h</strong></div>
+          <div class="stat"><span>Tirbandlik</span><strong class="text-primary">24%</strong></div>
+        </div>
+      </div>
     </div>
+  </header>
 
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/charts.js"></script>
+  <section class="features">
+    <div class="feature-card">
+      <div class="icon">💬</div>
+      <h3>NLP Assistant</h3>
+      <p>Haydovchilar bilan o'zbek tilida muloqot qilib, tirbandlik yoki marshrut bo'yicha maslahat beruvchi chatbot.
+      </p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🤖</div>
+      <h3>AI Klasterlash</h3>
+      <p>K-Means Machine Learning algoritmi orqali shahar yo'llarini xavf darajasiga qarab 3 guruhga (klasterga)
+        ajratish.</p>
+    </div>
+    <div class="feature-card">
+      <div class="icon">🚑</div>
+      <h3>EVP & Ustuvorlik</h3>
+      <p>Tez yordam kabi favqulodda transport vositalariga yashil chiroq (Priority) taqdim etish va ularni nazorat
+        qilish.</p>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="logo">
+        <span class="logo-text">OQIM</span>
+        <img src="./AI Chip.png" alt="Oqim Logo" class="logo-icon-img" style="height: 24px;">
+      </div>
+      <p>&copy; 2026 OQIM AI - Shahar transporti uchun intellektual yechimlar. Barcha huquqlar himoyalangan.</p>
+    </div>
+  </footer>
+
 </body>
+
 </html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OQIM AI — Dashboard</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Onest:wght@900&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="./AI Chip.png">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="css/dashboard.css?v=2">
+</head>
+<body>
+
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <!-- Logo -->
+      <div class="sidebar-logo">
+        <a href="/" class="logo-link">
+          <span class="logo-text">OQIM</span>
+          <img src="./AI Chip.png" alt="Logo" class="logo-img">
+        </a>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="conn-status" id="connectionStatus">
+        <span class="conn-dot"></span>
+        <span class="conn-label">Ulanmoqda...</span>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="kpi-section">
+        <div class="kpi-card">
+          <span class="kpi-icon">🚗</span>
+          <div>
+            <p class="kpi-label">Transportlar</p>
+            <strong class="kpi-value" id="vehicleCount">0</strong>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">⚡</span>
+          <div>
+            <p class="kpi-label">O'rtacha tezlik</p>
+            <strong class="kpi-value" id="avgSpeed">0 <small>km/h</small></strong>
+          </div>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-icon">🔴</span>
+          <div>
+            <p class="kpi-label">Tirbandlik</p>
+            <strong class="kpi-value" id="congestionLevel">0%</strong>
+          </div>
+        </div>
+        <div class="kpi-card alert-card">
+          <span class="kpi-icon">🚑</span>
+          <div>
+            <p class="kpi-label">Favqulodda</p>
+            <strong class="kpi-value" id="emergencyCount">0</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Road Status -->
+      <div class="section-title">Yo'l holati</div>
+      <div class="road-status">
+        <div class="road-item">
+          <span class="road-dot free"></span>
+          <span>Erkin</span>
+          <span class="road-count" id="freeCount">0</span>
+        </div>
+        <div class="road-item">
+          <span class="road-dot light"></span>
+          <span>Yengil</span>
+          <span class="road-count" id="lightCount">0</span>
+        </div>
+        <div class="road-item">
+          <span class="road-dot moderate"></span>
+          <span>O'rtacha</span>
+          <span class="road-count" id="moderateCount">0</span>
+        </div>
+        <div class="road-item">
+          <span class="road-dot heavy"></span>
+          <span>Tirbandlik</span>
+          <span class="road-count" id="heavyCount">0</span>
+        </div>
+      </div>
+
+      <!-- Controls -->
+      <div class="section-title">Boshqaruv</div>
+      <div class="controls">
+        <button class="ctrl-btn active" id="btnVehicles" onclick="toggleVehicles()">🚗 Transportlar</button>
+        <button class="ctrl-btn" id="btnHeatmap" onclick="toggleHeatmap()">🌡 Heatmap</button>
+        <button class="ctrl-btn" id="btnClusters" onclick="toggleClusters()">🤖 AI Klasterlar</button>
+        <button class="ctrl-btn danger" onclick="simulateEmergency()">🚨 Favqulodda Signal</button>
+        <a href="/gps" target="_blank" class="ctrl-btn" style="text-decoration:none;text-align:center;">📡 GPS Tracker →</a>
+      </div>
+
+      <!-- AI Analysis Panel -->
+      <div class="section-title">🤖 AI Tahlil</div>
+      <div class="ai-panel" id="aiPanel">
+        <div class="ai-stat-row">
+          <span class="ai-label">Eng band zona</span>
+          <span class="ai-val" id="hotspotZone">—</span>
+        </div>
+        <div class="ai-stat-row">
+          <span class="ai-label">Tirbandlik %</span>
+          <span class="ai-val red" id="hotspotLevel">—</span>
+        </div>
+        <div class="ai-stat-row">
+          <span class="ai-label">Holat</span>
+          <span class="ai-val" id="hotspotStatus">—</span>
+        </div>
+        <div class="ai-stat-row">
+          <span class="ai-label">Klasterlar</span>
+          <span class="ai-val blue" id="clusterInfo">—</span>
+        </div>
+        <button class="ctrl-btn" style="width:100%;margin-top:8px;" onclick="refreshAI()">⟳ Yangilash</button>
+      </div>
+
+      <!-- Live Log -->
+      <div class="section-title">Live Log</div>
+      <div class="live-log" id="eventsList">
+        <div class="log-item info">
+          <span class="log-time">--:--</span>
+          <span>Tizim ishga tushmoqda...</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN MAP AREA -->
+    <main class="map-main">
+
+      <!-- Top bar -->
+      <div class="topbar">
+        <div class="topbar-left">
+          <h2>Amsterdam Shahar Trafik Xaritasi</h2>
+          <span class="live-badge"><span class="live-dot"></span> Live</span>
+        </div>
+        <div class="topbar-right">
+          <span id="currentTime" class="current-time"></span>
+        </div>
+      </div>
+
+      <!-- Map -->
+      <div id="map"></div>
+
+      <!-- Floating info panel -->
+      <div class="info-panel" id="mapDetail" style="display:none;">
+        <div class="info-panel-head">
+          <h4 id="mapDetailTitle">Tanlangan obyekt</h4>
+          <button class="close-btn" onclick="closeMapDetail()">✕</button>
+        </div>
+        <div class="info-panel-body" id="mapDetailBody">
+          Yo'l yoki svetafor ustiga bosing.
+        </div>
+      </div>
+
+    </main>
+
+
+
+  </div>
+
+  <!-- Emergency Modal -->
+  <div class="modal-overlay" id="emergencyModal" style="display:none;">
+    <div class="modal-box">
+      <div class="modal-icon">🚨</div>
+      <h3>FAVQULODDA SIGNAL</h3>
+      <p id="emergencyMessage">Tez yordam yaqinlashmoqda!</p>
+      <div class="modal-details">
+        <div><span>Transport:</span> <strong id="emergencyVehicle">-</strong></div>
+        <div><span>Yo'nalish:</span> <strong id="emergencyDirection">-</strong></div>
+        <div><span>ETA:</span> <strong id="emergencyETA">-</strong></div>
+      </div>
+      <button class="ctrl-btn danger" onclick="closeEmergencyModal()">Yopish</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/app.js?v=6"></script>
+  <script src="js/map.js?v=6"></script>
+  <script src="js/charts.js?v=6"></script>
+</body>
+</html>

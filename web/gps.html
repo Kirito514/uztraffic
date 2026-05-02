@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>OQIM AI — GPS Tracker</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0a0f1e;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    .logo {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      color: #0066ff;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      background: linear-gradient(135deg, #fff 0%, #a0b4ff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: #6b7a99;
+      margin-bottom: 32px;
+    }
+
+    /* Vehicle ID Card */
+    .card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 16px;
+    }
+
+    .card label {
+      font-size: 11px;
+      letter-spacing: 1px;
+      color: #6b7a99;
+      text-transform: uppercase;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    .card input {
+      width: 100%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 15px;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .card input:focus {
+      border-color: #0066ff;
+    }
+
+    /* Status Card */
+    .status-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      margin-bottom: 16px;
+    }
+
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+
+    .status-row:last-child { border-bottom: none; }
+
+    .status-row .key { color: #6b7a99; font-size: 12px; }
+    .status-row .val { color: #fff; font-weight: 600; font-size: 14px; font-variant-numeric: tabular-nums; }
+    .status-row .val.green { color: #00cc66; }
+    .status-row .val.red { color: #ff3366; }
+    .status-row .val.blue { color: #4488ff; }
+
+    /* Big toggle button */
+    .btn-toggle {
+      width: 100%;
+      max-width: 400px;
+      padding: 18px;
+      border-radius: 16px;
+      border: none;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      transition: all 0.3s ease;
+      margin-bottom: 16px;
+    }
+
+    .btn-toggle.start {
+      background: linear-gradient(135deg, #0055dd, #0088ff);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0, 102, 255, 0.4);
+    }
+
+    .btn-toggle.stop {
+      background: linear-gradient(135deg, #cc0033, #ff3366);
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(255, 51, 102, 0.4);
+    }
+
+    .btn-toggle:active { transform: scale(0.97); }
+
+    /* Pulse indicator */
+    .pulse-wrap {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .pulse-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #444;
+    }
+
+    .pulse-dot.active {
+      background: #00cc66;
+      box-shadow: 0 0 0 0 rgba(0, 204, 102, 0.5);
+      animation: pulse 1.5s infinite;
+    }
+
+    .pulse-dot.error { background: #ff3366; }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(0, 204, 102, 0.5); }
+      70% { box-shadow: 0 0 0 10px rgba(0, 204, 102, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(0, 204, 102, 0); }
+    }
+
+    .pulse-label {
+      font-size: 13px;
+      color: #6b7a99;
+    }
+
+    /* Log */
+    .log {
+      width: 100%;
+      max-width: 400px;
+      background: rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 14px;
+      font-size: 12px;
+      font-family: 'Courier New', monospace;
+      max-height: 160px;
+      overflow-y: auto;
+      color: #4488ff;
+    }
+
+    .log .log-entry { margin-bottom: 4px; line-height: 1.5; }
+    .log .log-entry.err { color: #ff5577; }
+    .log .log-entry.ok  { color: #00cc66; }
+  </style>
+</head>
+<body>
+
+  <div class="logo">OQIM AI</div>
+  <h1>GPS Tracker</h1>
+  <p class="subtitle">Qurilmangiz koordinatlarini real vaqtda serverga yuboring</p>
+
+  <div class="card">
+    <label>Mashina ID</label>
+    <input type="text" id="vehicleId" value="CAR-001" maxlength="20" placeholder="Masalan: BUS-012">
+  </div>
+
+  <div class="status-card" id="statusCard">
+    <div class="status-row">
+      <span class="key">Holat</span>
+      <span class="val" id="statusText">To'xtatilgan</span>
+    </div>
+    <div class="status-row">
+      <span class="key">Kenglik (Lat)</span>
+      <span class="val blue" id="latVal">—</span>
+    </div>
+    <div class="status-row">
+      <span class="key">Uzunlik (Lng)</span>
+      <span class="val blue" id="lngVal">—</span>
+    </div>
+    <div class="status-row">
+      <span class="key">Tezlik</span>
+      <span class="val" id="speedVal">—</span>
+    </div>
+    <div class="status-row">
+      <span class="key">Yuborildi</span>
+      <span class="val green" id="sentCount">0 ta</span>
+    </div>
+    <div class="status-row">
+      <span class="key">Oxirgi yuborish</span>
+      <span class="val" id="lastSent">—</span>
+    </div>
+  </div>
+
+  <div class="pulse-wrap">
+    <div class="pulse-dot" id="pulseDot"></div>
+    <span class="pulse-label" id="pulseLabel">Kutilmoqda...</span>
+  </div>
+
+  <button class="btn-toggle start" id="toggleBtn" onclick="toggleTracking()">
+    ▶ Kuzatishni Boshlash
+  </button>
+
+  <div class="log" id="log"><div class="log-entry">Tizim tayyor. Boshlash tugmasini bosing.</div></div>
+
+  <script>
+    const SERVER = window.location.origin;
+    let tracking = false;
+    let watchId = null;
+    let intervalId = null;
+    let sentCount = 0;
+    let lastPosition = null;
+    let lastSpeed = 0;
+
+    function log(msg, type = '') {
+      const logEl = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry ' + type;
+      const time = new Date().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      entry.textContent = `[${time}] ${msg}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function updateUI(lat, lng, speed) {
+      document.getElementById('latVal').textContent = lat.toFixed(6);
+      document.getElementById('lngVal').textContent = lng.toFixed(6);
+      document.getElementById('speedVal').textContent = `${speed.toFixed(1)} km/h`;
+      sentCount++;
+      document.getElementById('sentCount').textContent = sentCount + ' ta';
+      document.getElementById('lastSent').textContent = new Date().toLocaleTimeString('uz-UZ');
+    }
+
+    async function sendPosition(lat, lng, speed, heading = 0) {
+      const vehicleId = document.getElementById('vehicleId').value.trim() || 'CAR-001';
+      try {
+        const res = await fetch(`${SERVER}/api/vehicles/update`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            vehicle_id: vehicleId,
+            latitude: lat,
+            longitude: lng,
+            speed: speed,
+            heading: heading
+          })
+        });
+
+        if (res.ok) {
+          updateUI(lat, lng, speed);
+          setPulse('active', '🟢 Server bilan ulangan');
+        } else {
+          log(`Server xatosi: ${res.status}`, 'err');
+          setPulse('error', '🔴 Server xatosi');
+        }
+      } catch (e) {
+        log('Server bilan bog\'liqlik yo\'q: ' + e.message, 'err');
+        setPulse('error', '🔴 Ulanib bo\'lmadi');
+      }
+    }
+
+    function setPulse(state, label) {
+      const dot = document.getElementById('pulseDot');
+      dot.className = 'pulse-dot ' + state;
+      document.getElementById('pulseLabel').textContent = label;
+    }
+
+    function onGpsSuccess(pos) {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+      // Browser m/s beradi, km/h ga o'tkazamiz
+      const speed = pos.coords.speed != null ? pos.coords.speed * 3.6 : lastSpeed;
+      const heading = pos.coords.heading || 0;
+      lastSpeed = speed;
+      lastPosition = { lat, lng, speed, heading };
+    }
+
+    function onGpsError(err) {
+      log('GPS xatosi: ' + err.message, 'err');
+      setPulse('error', '🔴 GPS ruxsat berilmadi');
+    }
+
+    function toggleTracking() {
+      if (!tracking) {
+        startTracking();
+      } else {
+        stopTracking();
+      }
+    }
+
+    function startTracking() {
+      if (!navigator.geolocation) {
+        log('Bu brauzer GPS ni qo\'llab-quvvatlamaydi!', 'err');
+        return;
+      }
+
+      const vehicleId = document.getElementById('vehicleId').value.trim() || 'CAR-001';
+      log(`Kuzatuv boshlandi: ${vehicleId}`, 'ok');
+      tracking = true;
+
+      document.getElementById('toggleBtn').textContent = '⏹ To\'xtatish';
+      document.getElementById('toggleBtn').className = 'btn-toggle stop';
+      document.getElementById('statusText').textContent = 'Ishlayapti';
+      document.getElementById('vehicleId').disabled = true;
+
+      setPulse('active', '📡 GPS signali kutilmoqda...');
+
+      // GPS pozitsiyasini kuzatish
+      watchId = navigator.geolocation.watchPosition(onGpsSuccess, onGpsError, {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0
+      });
+
+      // Har 3 soniyada serverga yuborish
+      intervalId = setInterval(async () => {
+        if (lastPosition) {
+          await sendPosition(lastPosition.lat, lastPosition.lng, lastPosition.speed, lastPosition.heading);
+          log(`📍 ${lastPosition.lat.toFixed(5)}, ${lastPosition.lng.toFixed(5)} | ${lastPosition.speed.toFixed(1)} km/h`, 'ok');
+        } else {
+          log('GPS signal kutilmoqda...', '');
+        }
+      }, 3000);
+    }
+
+    function stopTracking() {
+      tracking = false;
+
+      if (watchId) navigator.geolocation.clearWatch(watchId);
+      if (intervalId) clearInterval(intervalId);
+
+      watchId = null;
+      intervalId = null;
+
+      document.getElementById('toggleBtn').textContent = '▶ Kuzatishni Boshlash';
+      document.getElementById('toggleBtn').className = 'btn-toggle start';
+      document.getElementById('statusText').textContent = 'To\'xtatilgan';
+      document.getElementById('vehicleId').disabled = false;
+
+      setPulse('', 'Kutilmoqda...');
+      log('Kuzatuv to\'xtatildi.', 'err');
+    }
+  </script>
+</body>
+</html>

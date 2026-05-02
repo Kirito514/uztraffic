@@ -1,0 +1,327 @@
+
+
+
+
+SUN'IY INTELLEKT ASOSLARI
+Python Kursi Loyihasi
+GURUH 4
+Transport: Shahar Trafigini
+Boshqarish Muammosi
+NAZARIY QISM — AI Muammo Turlari
+
+Loyiha nomi	Shahar trafigi boshqaruvi (OQIM AI)
+AI turlari	Klassifikatsiya, Regressiya, Klasterlash, Tavsiya tizimi, NLP, Kompyuter ko'rishi
+Amaliy soha	Transport, smart svetafor, GPS monitoring, haydovchi ilovasi
+Yil	2025-2026
+ 
+Kirish
+Shahar trafigini boshqarish — bu zamonaviy sun'iy intellektning eng muhim amaliy yo'nalishlaridan biridir. Toshkent shahri misolida ko'radigan bo'lsak, yo'llar 400 ming mashinaga mo'ljallangan bo'lsa-da, hozirda 770 mingdan ortiq transport vositasi harakatlanmoqda. Bu holat yiliga taxminan 343 million dollar iqtisodiy zarar keltirmoqda.
+
+Sun'iy intellekt texnologiyalari bu muammoni hal qilishda muhim rol o'ynaydi. Ushbu nazariy qismda biz oltita asosiy AI yo'nalishini — Klassifikatsiya, Regressiya, Klasterlash, Tavsiya tizimi, NLP va Kompyuter ko'rishi — transport boshqaruvi kontekstida batafsil ko'rib chiqamiz.
+
+Har bir AI turi uchun quyidagilar yoritiladi:
+•	Ta'rifi va mohiyati
+•	Ishlash prinsipi va algoritmlari
+•	Transport tizimidagi qo'llanilishi
+•	Amaliy misol va natijalar
+•	Afzalliklari va cheklovlari
+ 
+1. KLASSIFIKATSIYA
+
+1.1. Ta'rifi va Mohiyati
+Klassifikatsiya (Classification) — bu ma'lum bir ob'ektni oldindan belgilangan kategoriyalardan biriga ajratishga yo'naltirilgan nazorat ostidagi o'rganish (supervised learning) usuli. Model o'quv ma'lumotlaridan o'rganib, yangi ma'lumotlarni avtomatik ravishda tasniflaydi.
+
+1.2. Ishlash Prinsipi
+Klassifikatsiya quyidagi bosqichlarda amalga oshiriladi:
+1.	Ma'lumot yig'ish — transport kameralari, GPS sensorlar, svetaforlardan ma'lumot olish
+2.	Xususiyat ajratish — mashina soni, tezlik, vaqt, ob-havo, yo'l holati kabi parametrlarni belgilash
+3.	Model o'qitish — tarixiy ma'lumotlar asosida klassifikator algoritmini o'qitish
+4.	Bashorat — yangi ma'lumot kelganda trafik holatini avtomatik aniqlash
+5.	Natijani tasdiqlash — modelning aniqligi (accuracy) ni o'lchash
+
+1.3. Asosiy Algoritmlar
+Algoritm	Ishlash prinsipi	Trafik uchun afzalligi
+Logistik Regressiya	Ehtimollik asosida ikki sinfga ajratish	Tez va oddiy, boshlang'ich model uchun yaxshi
+Qaror daraxti (Decision Tree)	Savol-javob orqali bo'lish	Tushunish oson, qoidalarni ko'rish mumkin
+Random Forest	Ko'p daraxtlar birlashmasi	Yuqori aniqlik, barqaror natija
+SVM (Support Vector Machine)	Optimal chegara chizish	Murakkab ma'lumotlar uchun yaxshi
+K-Nearest Neighbors (KNN)	Eng yaqin qo'shnilar bo'yicha	Oddiy va intuitiv
+Neyron tarmoqlar (ANN)	Inson miyasiga o'xshash	Katta ma'lumotlarda eng yuqori aniqlik
+
+1.4. Transport Tizimida Qo'llanilishi
+Trafik holati klassifikatsiyasi:
+Shahar ko'chalarida trafik holati quyidagi sinflarga bo'linadi: Erkin harakatlanish (0-20% zichlik), Normal harakatlanish (21-60% zichlik), Tirbandlik (61-85% zichlik), To'liq tirbandlik (86-100% zichlik). Klassifikatsiya modeli real vaqtda qaysi holatda ekanligini aniqlaydi.
+
+Amaliy misol — OQIM AI da klassifikatsiya:
+Kiruvchi ma'lumotlar (xususiyatlar):
+•	Yo'lda mashina soni (0-500)
+•	O'rtacha tezlik (km/soat)
+•	Kun vaqti (ertalab/kunduz/kechqurun/tun)
+•	Hafta kuni (ish kuni/dam olish)
+•	Ob-havo (yomg'ir/qor/ochiq)
+•	Maxsus holat (bayram, tadbirlar)
+
+Natija (sinf):
+•	Sinf 0 — Erkin (svetafor normal ishlaydi)
+•	Sinf 1 — Normal (svetafor biroz ko'proq vaqt beradi)
+•	Sinf 2 — Tirbandlik (qo'shimcha choralar kerak)
+•	Sinf 3 — Jiddiy tirbandlik (tez yordam yo'li ochiladi)
+
+1.5. Natijalar va Baholash
+Ko'rsatkich	Ta'rifi	Yaxshi qiymat
+Accuracy (Aniqlik)	To'g'ri bashoratlar ulushi	> 85%
+Precision	Ijobiy bashorat aniqligi	> 80%
+Recall	Haqiqiy ijobiylarni topish	> 80%
+F1-Score	Precision va Recall o'rtacha	> 82%
+Confusion Matrix	Sinf bo'yicha xatolar jadvali	Asosiy xatolar minimal
+
+1.6. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+Real vaqtda trafik holati aniqlash	O'quv ma'lumotlari labeled bo'lishi kerak
+Svetaforni avtomatik sozlash	Noyob holatlar uchun aniqlik pasayadi
+Haydovchilarga ogohlantirish yuborish	Yangi yo'l qurulishi modelni yangilashni talab qiladi
+Tez yordam yo'lini avtomatik ochish	Ob-havo kabi tashqi omillar ta'sir qiladi
+ 
+2. REGRESSIYA
+
+2.1. Ta'rifi va Mohiyati
+Regressiya (Regression) — bu kiruvchi ma'lumotlar asosida uzluksiz (continuous) raqamli qiymatni bashorat qiluvchi nazorat ostidagi o'rganish usuli. Klassifikatsiyadan farqli ravishda, regressiya aniq bir sinf emas, balki aniq raqamli qiymat bashorat qiladi.
+
+2.2. Ishlash Prinsipi
+Regressiya modeli kiruvchi xususiyatlar (X) va chiquvchi qiymat (Y) o'rtasidagi matematik munosabatni o'rganadi. Maqsad — bu munosabatni eng yaxshi ifodalovchi funksiyani topish, ya'ni Y = f(X) funksiyasini o'rnatish.
+
+Asosiy regressiya turlari:
+•	Chiziqli regressiya (Linear Regression) — oddiy to'g'ri chiziq munosabati
+•	Ko'p o'zgaruvchili regressiya — bir nechta omillar hisobga olinadi
+•	Polinom regressiya — egri chiziqli munosabatlar uchun
+•	Ridge va Lasso — ortiqcha o'rganishning oldini olish uchun
+•	Random Forest Regressor — daraxtlar asosidagi regressiya
+•	Neyron tarmoq regressiya — murakkab va nochiziqli munosabatlar uchun
+
+2.3. Transport Tizimida Qo'llanilishi
+Mashina soni bashorati:
+OQIM AI tizimida regressiya asosiy bashorat vositasi hisoblanadi. Tizim keyingi 15, 30 va 60 daqiqada yo'ldagi mashina sonini aniq raqam sifatida bashorat qiladi. Bu bashorat asosida svetaforlar, haydovchilarga yo'nalishlar va boshqa choralar oldindan belgilanadi.
+
+Bashorat ob'ekti	Kiruvchi ma'lumotlar	Bashorat vaqti
+Yo'ldagi mashina soni	Tarixiy trafik, vaqt, ob-havo	15-60 daqiqa oldin
+O'rtacha tezlik	Mashina soni, yo'l kengligi, svetafor	10-30 daqiqa oldin
+Manzilga yetish vaqti	Marshrut, trafik, masofа	Real vaqt
+Yoqilg'i sarfi	Tezlik, tirbandlik, masofa	Har bir reys uchun
+Tez yordam vaqti	Marshrut, svetafor holati	Chiqishdan oldin
+
+Amaliy formula — oddiy misol:
+Mashina soni bashorati (chiziqli regressiya):
+Y = β₀ + β₁×Vaqt + β₂×Hafta_kuni + β₃×Ob_havo + β₄×Tarixiy_o'rtacha
+Bu yerda: Y = bashorat qilingan mashina soni, β = koeffitsientlar (model tomonidan o'rganiladigan)
+
+2.4. Model Baholash Ko'rsatkichlari
+Ko'rsatkich	Formula	Izoh
+MAE (O'rtacha mutlaq xato)	Σ|Yreal - Ybashorat| / n	Kichik bo'lsa yaxshi, tushunish oson
+MSE (O'rtacha kvadrat xato)	Σ(Yreal - Ybashorat)² / n	Katta xatolarni kuchaytiradi
+RMSE (Kvadrat ildiz MSE)	√MSE	Asl birlikda xato o'lchami
+R² (Determinatsiya koeffitsienti)	1 - SS_res/SS_tot	1 ga yaqin bo'lsa yaxshi (0-1 oralig'ida)
+
+2.5. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+Oldindan tirbandlikni bashorat qilish	Noto'g'ri ma'lumotlar natijani buzadi
+Svetaforni oldindan sozlash imkoni	Favqulodda hodisalar (avariya) bashorat qilinmaydi
+Haydovchiga ETA (yetib borish vaqti) berish	Yangi yo'llar qo'shilsa model yangilanadi
+Resurslarni tejash (yoqilg'i, vaqt)	Ob-havo o'zgarishi aniqlikni pasaytirishi mumkin
+ 
+3. KLASTERLASH
+
+3.1. Ta'rifi va Mohiyati
+Klasterlash (Clustering) — bu nazorat ostida bo'lmagan o'rganish (unsupervised learning) usuli bo'lib, ma'lumotlarni oldindan belgilanmagan guruhlarga (klasterlarga) avtomatik ajratadi. Klassifikatsiyadan farqi shundaki, klasterlashda sinf yorliqlari (labels) mavjud emas — model o'zi umumiyliklarni topadi.
+
+3.2. Asosiy Algoritmlar
+Algoritm	Ishlash usuli	Qachon ishlatiladi
+K-Means	K ta markazga eng yaqin nuqtalarni birlashtiradi	Klaster soni ma'lum bo'lganda
+DBSCAN	Zichlikka asoslanib guruhlaydi	Noaniq shaklli klasterlar uchun
+Hierarchical Clustering	Daraxt strukturasida birlashtiradi	Klaster soni noma'lum bo'lganda
+Gaussian Mixture Model	Ehtimollik asosida ajratadi	Klasterlar bir-birini kesib o'tganda
+Mean Shift	Zich nuqtalar atrofida markazlashadi	Avtomatik klaster soni topishda
+
+3.3. Transport Tizimida Qo'llanilishi
+Ko'cha segmentlarini klasterlash:
+OQIM AI ko'chalarni trafik xususiyatlariga ko'ra klasterlarga ajratadi. Har bir klaster o'ziga xos strategiya bilan boshqariladi. Bu yondashuv resurslarni samaraliroq taqsimlash imkonini beradi.
+
+Klaster	Xususiyatlari	Boshqaruv strategiyasi
+Klaster A — Doim tirband	Har kuni 07:00-20:00 zichlik yuqori	Smart svetafor, muqobil marshrut
+Klaster B — Navbatli tirband	Ertalab va kechqurun pik soatlar	Oldindan signal, haydovchi ogohlantirish
+Klaster C — Kam tirband	Kechqurun soat 22:00+ dan keyin	Minimal svetafor intervali
+Klaster D — Tadbirga bog'liq	Bayram va sport musobaqalarida zichlik	Maxsus rejim, qo'shimcha yo'llar
+Klaster E — Avariya xavfli	Qo'ng'iroqlar ko'p, tez yordam tez-tez	Kuzatuvni kuchaytirish
+
+Haydovchi xatti-harakati klasterlanishi:
+OQIM AI haydovchilarni ham klasterlaydi — bu rag'bat tizimi va Raqamli Advokat uchun asos bo'ladi:
+•	Xavfsiz haydovchilar — doim qoidaga rioya qiluvchi, tizim tavsiyalariga amal qiluvchi
+•	O'rtacha haydovchilar — ba'zan qoidabuzarlik, tizim bilan qisman ishlaydi
+•	Xavfli haydovchilar — tez-tez qoidabuzarlik, tizim ogohlantirishlariga amal qilmaydi
+
+3.4. K-Means Ishlash Jarayoni
+6.	Boshlang'ich K ta markaz (centroid) tasodifiy tanlanadi
+7.	Har bir nuqta eng yaqin markazga biriktiriladi
+8.	Yangi markazlar klaster o'rtachasi sifatida hisoblanadi
+9.	Markazlar o'zgarmagunga qadar 2-3 qadamlar takrorlanadi
+10.	Yakuniy klasterlar aniqlanadi va tahlil qilinadi
+
+3.5. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+Yorliqsiz ma'lumotlarda naqsh topadi	K-Means uchun klaster sonini oldindan bilish kerak
+Ko'chalar bo'yicha moslashtirilgan strategiya	Tashqi omillar klasterni o'zgartirishi mumkin
+Resurslarni optimal taqsimlash	Katta ma'lumotlarda hisoblash ko'p vaqt oladi
+Yangi naqshlarni avtomatik aniqlash	Klasterlar talqin qilishni talab qiladi
+ 
+4. TAVSIYA TIZIMI
+
+4.1. Ta'rifi va Mohiyati
+Tavsiya tizimi (Recommendation System) — bu foydalanuvchining xatti-harakati, afzalliklari va kontekst asosida eng mos variantni taklif qiluvchi AI tizimi. Netflix filmlar tavsiya qilsa, OQIM AI haydovchilarga eng optimal marshrutni tavsiya qiladi.
+
+4.2. Tavsiya Tizimining Turlari
+Tur	Ishlash usuli	Trafik uchun misol
+Content-based filtering	Ob'ekt xususiyatlari bo'yicha o'xshashlarni tavsiya qilish	Haydovchi sevgan marshrut xususiyatlariga o'xshash yo'l tavsiya
+Collaborative filtering	O'xshash foydalanuvchilar tanloviga asoslanish	Bir xil maqsadli haydovchilar ishlatgan marshrut
+Hybrid approach	Ikkalasini birlashtirish	Xususiyat + O'xshash haydovchilar birgalikda
+Knowledge-based	Qoidalar va cheklovlar asosida	Eng qisqa + eng tez + kam tirbandlik
+Context-aware	Joriy vaziyat hisobga olinadi	Vaqt, ob-havo, maqsad asosida real vaqt tavsiya
+
+4.3. Transport Tizimida Qo'llanilishi
+Marshrut tavsiya tizimi:
+OQIM AI haydovchining ilovasida real vaqtda eng optimal marshrutni tavsiya qiladi. Oddiy navigatsiyadan farqi shundaki, OQIM AI nafaqat masofani, balki trafik oqimini ham hisobga oladi va shaxsiylashtirilgan tavsiya beradi.
+
+Tavsiyani shakllantirishda hisobga olinadigan omillar:
+•	Haydovchining joriy joylashuvi va manzili
+•	Real vaqt trafik holati (OQIM AI klassifikatsiya natijasi)
+•	15-30 daqiqali bashorat (regressiya natijasi)
+•	Haydovchining oldingi marshrutlari va afzalliklari
+•	Yo'lda tirbandlik bo'lgan klasterlar (klasterlash natijasi)
+•	Umumiy trafik oqimini muvozanatlash maqsadi
+
+Rag'bat tizimi bilan integratsiya:
+Tavsiya tizimi faqat haydovchiga emas, butun trafik tizimiga foyda keltiruvchi marshrutlarni tavsiya qiladi. Tizim tavsiyasiga amal qilgan haydovchi bal oladi: parking imtiyozi, sug'urta chegirmasi, va boshqalar.
+
+Tavsiya turi	Qachon	Natija
+Muqobil marshrut	Asosiy yo'lda tirbandlik boshlanishidan 10 daq oldin	Asosiy yo'lda yuk kamayadi
+Vaqtni o'zgartirish	Pik soatlar oldidan	Trafik bir tekisroq taqsimlanadi
+Jamoat transporti	Kuchli tirbandlikda	Yo'ldagi mashina soni kamayadi
+Parking tavsiyasi	Shahar markaziga kirish oldidan	Maqsadga yaqin bo'sh joy
+Tezlikni kamaytirish	Oldinda tirbandlik boshlanayotganda	Haydovchi to'g'ridan-to'g'ri qo'shilmaydi
+
+4.4. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+Shaxsiylashtirilgan, qulay tavsiya	Cold start muammosi — yangi haydovchi uchun ma'lumot yo'q
+Trafik yukini muvozanatlash	Barcha haydovchi tavsiyaga rioya qilmaydi
+Haydovchi vaqti va yoqilg'ini tejash	Ma'lumot maxfiyligi masalasi
+Tizimga ishonch va sadoqat oshadi	Real vaqt ma'lumot yangilanishi kerak
+ 
+5. NLP — TABIIY TILNI QAYTA ISHLASH
+
+5.1. Ta'rifi va Mohiyati
+NLP (Natural Language Processing — Tabiiy Tilni Qayta Ishlash) — bu kompyuterning inson tilidagi matnni tushunishi, tahlil qilishi va ishlab chiqarishiga yo'naltirilgan AI sohasi. Transport kontekstida NLP haydovchilar bilan muloqot, shikoyatlarni tahlil qilish va voqea hisobotlarini avtomatik qayta ishlashda ishlatiladi.
+
+5.2. NLP Asosiy Vazifalari
+NLP vazifasi	Ta'rifi	Trafik misolida
+Sentiment tahlil	Matnning ijobiy/salbiy ekanini aniqlash	Haydovchi shikoyatlarini baholash
+Matn klassifikatsiyasi	Matnni turkumlarga ajratish	Xabarlarni (avariya/tirbandlik/savol) ajratish
+Axborot ajratish (NER)	Matndan muhim ma'lumot ajratib olish	Xabardan joy nomi, vaqt, raqam ajratish
+Matn yaratish	Avtomatik matn hosil qilish	Haydovchiga ogohlantirish xabari yozish
+Savol-javob tizimi	Savolga javob topish	Haydovchi chatbot muloqoti
+Tarjima	Bir tildan boshqa tilga o'tkazish	Ko'p millatli haydovchilar uchun
+
+5.3. Transport Tizimida Qo'llanilishi
+Haydovchi muloqot chatboti:
+OQIM AI ilovasida NLP asosidagi chatbot haydovchilar bilan o'zbek, rus va ingliz tillarida muloqot qiladi. Haydovchi ovozli yoki yozma savol berishi mumkin:
+•	"Bugun Yunusobod ko'prigida tirbandlik bormi?" — trafik ma'lumoti
+•	"Eng tez yo'l qaysi?" — marshrut tavsiyasi
+•	"Mening reytingim qancha?" — shaxsiy statistika
+•	"Bugun yangi qoidalar bormi?" — yangiliklar
+
+Voqea hisobotlarini avtomatik tahlil:
+Haydovchilar tizimga matn orqali voqea haqida xabar berishi mumkin: "Amir Temur ko'chasida katta avariya, mashina yo'lni to'sib turibdi". NLP modeli bu xabardan quyidagilarni ajratib oladi:
+•	Joy nomi: Amir Temur ko'chasi
+•	Voqea turi: avariya
+•	Jiddiyligi: katta (yo'lni to'sib turibdi)
+•	Harakat: tez yordam va tirbandlik ogohlantirishini yuborish
+
+Ijtimoiy tarmoq tahlili:
+NLP Telegram, Twitter va boshqa ijtimoiy tarmoqlarda trafik haqidagi xabarlarni real vaqtda kuzatib, tizimga tezkor ma'lumot beradi. Bu GPS va kameralas ma'lumotlarga qo'shimcha manba bo'ladi.
+
+5.4. NLP Texnologiyalari
+Texnologiya	Qo'llanilishi
+BERT / RoBERTa	Kontekstni chuqur tushunish, sentiment tahlil
+GPT modellari	Tabiiy javob yaratish, chatbot
+spaCy	Tez va samarali matn tahlili, NER
+HuggingFace Transformers	Tayyorlaymogan modellardan foydalanish
+NLTK	Asosiy matn qayta ishlash, tokenizatsiya
+Word2Vec / FastText	So'z vektorlari, o'xshashlik hisoblash
+
+5.5. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+Haydovchi bilan tabiiy muloqot	O'zbek tili uchun modellar kamroq
+Voqealarni tez aniqlash	Noto'g'ri yoki yolg'on xabarlar muammosi
+Ko'p tilli qo'llab-quvvatlash	Murakkab gaplar ba'zan noto'g'ri tushuniladi
+24/7 avtomatik xizmat	O'qitish uchun ko'p ma'lumot kerak
+ 
+6. KOMPYUTER KO'RISHI
+
+6.1. Ta'rifi va Mohiyati
+Kompyuter ko'rishi (Computer Vision) — bu kompyuterning raqamli tasvirlar va videolardan ma'lumot ajratib olishi va ularni tushunishiga yo'naltirilgan AI sohasi. Transport tizimida kompyuter ko'rishi yo'l kameralari orqali mashina soni, tezlik, qoidabuzarlik va avariyalarni avtomatik aniqlaydi.
+
+6.2. Asosiy Vazifalar
+Vazifa	Ta'rifi	Trafik misolida
+Ob'ekt aniqlash (Detection)	Tasvirda ob'ekt borligini va joyini aniqlash	Yo'ldagi mashinalar, piyodalar, velosipedchilarni aniqlash
+Ob'ekt klassifikatsiyasi	Ob'ekt turini aniqlash	Avtomobil, avtobus, yuk mashina, mototsikl
+Ob'ekt kuzatish (Tracking)	Video bo'yicha ob'ektni kuzatish	Alohida mashinani kamera bo'yicha kuzatish
+Segmentatsiya	Tasvirni piksel darajasida bo'lish	Yo'l, piyoda yo'lagi, o'tish joyini ajratish
+Raqamni o'qish (OCR)	Matnni rasmdan o'qish	Avtomobil raqamini skanerlash
+Anomaliya aniqlash	Noodatiy holatni topish	Yo'lni to'sib turgan mashina, avariya
+
+6.3. Transport Tizimida Qo'llanilishi
+Raqam plakasini aniqlash (ANPR):
+Toshkentda hozirda 100 dan ortiq Maxvision kompaniyasining 4K kameralari o'rnatilgan. Bu kameralar har kuni minglab mashinalarning raqam plakasini skanerlaydi. OQIM AI bu kameralarga ulangan holda quyidagi ma'lumotlarni oladi:
+•	Qaysi mashina qaysi yo'ldan o'tdi va qachon
+•	Mashinaning tezligi (ikki kamera orasidagi vaqt farqi asosida)
+•	Yo'lda nechta mashina borligini real vaqtda hisoblash
+•	Qoidabuzarliklarni avtomatik aniqlash
+
+Real vaqt trafik tahlili:
+Aniqlanadigan holat	Usul	Harakat
+Mashina soni	Ob'ekt aniqlash va sanash	Trafik zichligini hisoblash
+O'rtacha tezlik	Kuzatish va vaqt o'lchash	Tezlik cheklovini nazorat qilish
+Noto'g'ri qator	Segmentatsiya + aniqlash	Haydovchini ogohlantirish, jarima
+Qizil chiroq buzilishi	Svetafor holati + mashina pozitsiyasi	Avtomatik jarima, foto-dalil
+Yo'lni to'sib turish	Anomaliya aniqlash	Tez yordam va tirbandlik ogohlantirish
+Avariya	Harakatni tahlil qilish	Tez yordam chaqirish, Green Wave
+Yuk oriqtaqlash	Ob'ekt o'lchami tahlili	Og'ir yuk uchun boshqa yo'l
+
+Asosiy algoritmlar:
+•	YOLO (You Only Look Once) — real vaqt ob'ekt aniqlash, juda tez
+•	SSD (Single Shot Detector) — tezlik va aniqlik muvozanati
+•	Faster R-CNN — yuqori aniqlik kerak bo'lganda
+•	OpenCV — klassik kompyuter ko'rishi kutubxonasi
+•	DeepSORT — ob'ekt kuzatish algoritmi
+•	EasyOCR / Tesseract — raqam plakasini o'qish
+
+6.4. Afzalliklari va Cheklovlari
+Afzalliklari	Cheklovlari
+GPS siz ham ishlaydi (telefonsiz mashinalar uchun)	Yomg'ir, tuman, qorong'ida aniqlik pasayadi
+Ob'ektiv dalil yaratadi (raqamli guvoh)	Kamera infratuzilmasi qimmat
+Real vaqtda, kechikishsiz aniqlash	Shaxsiy ma'lumotlar himoyasi muammosi
+Mavjud kameralar bilan ishlaydi	Katta hajmli video qayta ishlash resurs talab qiladi
+ 
+UMUMIY XULOSA — OQIM AI DA AI TURLARI INTEGRATSIYASI
+
+OQIM AI tizimi oltita AI turining barchasini birlashtirib ishlaydi. Har bir AI turi o'z vazifasini bajaradi va birgalikda yaxlit aqlli transport tizimini tashkil etadi.
+
+AI Turi	OQIM AI dagi roli	Natija
+Klassifikatsiya	Real vaqt trafik holati aniqlash	Svetaforlarni darhol sozlash
+Regressiya	15-60 daqiqa oldindan tirbandlik bashorati	Oldindan chora ko'rish
+Klasterlash	Ko'chalar va haydovchilarni guruhlash	Moslashtirilgan strategiya
+Tavsiya tizimi	Haydovchiga optimal marshrut berish	Trafik oqimini muvozanatlash
+NLP	Haydovchi muloqoti va voqea tahlili	Tez muammoni aniqlash
+Kompyuter ko'rishi	Kamera orqali real ma'lumot olish	GPS siz ham ishlash
+
+Bu integratsiya natijasida OQIM AI dunyo bo'yicha mavjud smart trafik tizimlaridan farq qiladigan, O'zbekiston sharoitiga moslashtirilgan va texnologik jihatdan kuchli yechim hisoblanadi. Tizim nafaqat tirbandlikni kamaytiradi, balki haydovchilarni himoya qiladi, favqulodda xizmatlarga yo'l ochadi va shahardagi transport boshqaruvini tubdan o'zgartiradi.
+
+
+Guruh 4 — Transport | Sun'iy Intellekt Asoslari | Python Kursi

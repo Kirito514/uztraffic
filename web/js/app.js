@@ -5,13 +5,14 @@
 // API Base URL
 const API_BASE = 'http://localhost:8000';
 const WS_URL = 'ws://localhost:8000/ws/realtime';
+const ENABLE_SIMULATION = true;
 
 // Global state
 let websocket = null;
 let isConnected = false;
 let showVehicles = true;
 let showHeatmap = true;
-let simulationData = {
+window.simulationData = {
     vehicles: [],
     signals: [],
     segments: [],
@@ -31,12 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
     updateTime();
     setInterval(updateTime, 1000);
 
-    initWebSocket();
-    initCharts();
+    if (ENABLE_SIMULATION) initWebSocket();
     initMap();
 
     // Fallback: polling if WebSocket fails
-    setInterval(fetchData, 2000);
+    if (ENABLE_SIMULATION) setInterval(fetchData, 2000);
+
+    // AI tahlilni boshlash
+    refreshAI();
+    setInterval(refreshAI, 10000); // har 10 soniyada yangilash
 
     addEvent('info', 'Tizim ishga tushdi');
 });
@@ -59,9 +63,11 @@ function updateTime() {
 
 // WebSocket connection
 function initWebSocket() {
-    try {
-        websocket = new WebSocket(WS_URL);
+    const wsUrl = `ws://${location.host}/ws/realtime`;
+    console.log('Ulanish:', wsUrl);
+    websocket = new WebSocket(wsUrl);
 
+    try {
         websocket.onopen = () => {
             isConnected = true;
             connectionStatus.textContent = '🟢 Ulangan';
@@ -71,21 +77,37 @@ function initWebSocket() {
 
         websocket.onmessage = (event) => {
             const data = JSON.parse(event.data);
-            handleMessage(data);
+            if (data.type) {
+                // Handle old format or specific events
+                switch (data.type) {
+                    case 'emergency_activated':
+                        showEmergencyAlert(data);
+                        break;
+                    case 'vehicle_update':
+                        updateVehicleOnMap(data.data);
+                        break;
+                }
+            } else if (data.vehicles || data.signals || data.segments) {
+                // Direct dashboard data
+                updateDashboard(data);
+            }
         };
 
         websocket.onerror = (error) => {
             console.error('WebSocket error:', error);
             isConnected = false;
-            connectionStatus.textContent = '🔴 Xato';
-            connectionStatus.classList.remove('connected');
+            if(connectionStatus) {
+                connectionStatus.textContent = '🔴 Xato';
+                connectionStatus.classList.remove('connected');
+            }
         };
 
         websocket.onclose = () => {
             isConnected = false;
-            connectionStatus.textContent = '⚪ Uzilgan';
-            connectionStatus.classList.remove('connected');
-
+            if(connectionStatus) {
+                connectionStatus.textContent = '⚪ Uzilgan';
+                connectionStatus.classList.remove('connected');
+            }
             // Reconnect after 3 seconds
             setTimeout(initWebSocket, 3000);
         };
@@ -94,51 +116,52 @@ function initWebSocket() {
     }
 }
 
-// Handle WebSocket messages
-function handleMessage(data) {
-    switch (data.type) {
-        case 'traffic_update':
-            updateDashboard(data.data);
-            break;
-        case 'emergency_activated':
-            showEmergencyAlert(data);
-            break;
-        case 'vehicle_update':
-            updateVehicleOnMap(data.data);
-            break;
-    }
-}
-
 // Fetch data via REST API (fallback)
 async function fetchData() {
-    if (isConnected) return; // Skip if WebSocket is connected
+    if (!ENABLE_SIMULATION) return;
+    if (isConnected) return;
 
     try {
-        // Get traffic overview
         const overviewRes = await fetch(`${API_BASE}/api/traffic/overview`);
         if (overviewRes.ok) {
             const overview = await overviewRes.json();
             updateStats(overview);
         }
 
-        // Get vehicles
         const vehiclesRes = await fetch(`${API_BASE}/api/vehicles`);
         if (vehiclesRes.ok) {
             const data = await vehiclesRes.json();
-            simulationData.vehicles = data.vehicles || [];
+            window.simulationData.vehicles = (data.vehicles || []).map((v) => ({
+                id: v.vehicle_id || v.id,
+                lat: v.latitude ?? v.lat,
+                lng: v.longitude ?? v.lng,
+                speed: v.speed,
+                type: v.vehicle_type || v.type,
+                emergency: v.is_emergency || v.emergency,
+                road: v.current_road || v.road
+            }));
             updateVehiclesOnMap();
         }
 
-        // Get congestion
+        const signalsRes = await fetch(`${API_BASE}/api/signals`);
+        if (signalsRes.ok) {
+            const data = await signalsRes.json();
+            window.simulationData.signals = data.signals || [];
+            if (typeof updateSignalsOnMap === 'function') updateSignalsOnMap();
+        }
+
         const congestionRes = await fetch(`${API_BASE}/api/traffic/congestion`);
         if (congestionRes.ok) {
             const data = await congestionRes.json();
-            simulationData.segments = data.segments || [];
+            window.simulationData.segments = data.segments || [];
             updateHeatmapOnMap();
         }
 
-        // Simulation step
         await fetch(`${API_BASE}/api/simulation/step`, { method: 'POST' });
+        
+        if (typeof showClusters !== 'undefined' && showClusters) {
+            fetchClusters();
+        }
 
     } catch (e) {
         console.log('API not available, using demo mode');
@@ -162,7 +185,21 @@ function updateDashboard(data) {
         updateStatusBreakdown(data.segments_by_status);
     }
 
-    // Update charts
+    if (Array.isArray(data.vehicles)) {
+        window.simulationData.vehicles = data.vehicles;
+        if (typeof updateVehiclesOnMap === 'function') updateVehiclesOnMap();
+    }
+
+    if (Array.isArray(data.signals)) {
+        window.simulationData.signals = data.signals;
+        if (typeof updateSignalsOnMap === 'function') updateSignalsOnMap();
+    }
+
+    if (Array.isArray(data.segments)) {
+        window.simulationData.segments = data.segments;
+        if (typeof updateHeatmapOnMap === 'function') updateHeatmapOnMap();
+    }
+
     addCongestionDataPoint(data.average_congestion || 50);
     addSpeedDataPoint(data.average_speed || 40);
 }
@@ -228,8 +265,8 @@ function addEvent(type, message) {
 // Toggle vehicles visibility
 function toggleVehicles() {
     showVehicles = !showVehicles;
-    document.getElementById('vehicleToggle').textContent =
-        showVehicles ? '🚗 Yashirish' : '🚗 Ko\'rsatish';
+    const btn = document.getElementById('btnVehicles');
+    if (btn) btn.classList.toggle('active', showVehicles);
 
     if (typeof updateVehiclesVisibility === 'function') {
         updateVehiclesVisibility(showVehicles);
@@ -239,8 +276,8 @@ function toggleVehicles() {
 // Toggle heatmap visibility
 function toggleHeatmap() {
     showHeatmap = !showHeatmap;
-    document.getElementById('heatmapToggle').textContent =
-        showHeatmap ? '🌡️ Yashirish' : '🌡️ Ko\'rsatish';
+    const btn = document.getElementById('btnHeatmap');
+    if (btn) btn.classList.toggle('active', showHeatmap);
 
     if (typeof updateHeatmapVisibility === 'function') {
         updateHeatmapVisibility(showHeatmap);
@@ -284,18 +321,17 @@ function showEmergencyAlert(data) {
     document.getElementById('emergencyDirection').textContent = 'Shimol → Janub';
     document.getElementById('emergencyETA').textContent = '~3 daqiqa';
 
-    modal.classList.add('active');
+    modal.style.display = 'flex';
 
     addEvent('emergency', `🚨 ${data.vehicle_id} favqulodda rejimda!`);
     emergencyCount.textContent = parseInt(emergencyCount.textContent) + 1;
 
-    // Auto close after 5 seconds
     setTimeout(closeEmergencyModal, 5000);
 }
 
 // Close emergency modal
 function closeEmergencyModal() {
-    document.getElementById('emergencyModal').classList.remove('active');
+    document.getElementById('emergencyModal').style.display = 'none';
 }
 
 // Generate demo data (when not connected to server)
@@ -357,3 +393,215 @@ function generateDemoData() {
 window.simulationData = simulationData;
 window.addEvent = addEvent;
 window.showEmergencyAlert = showEmergencyAlert;
+
+// ===== AI TAHLIL FUNKSIYALARI =====
+async function refreshAI() {
+    try {
+        // 1. Hotspot (eng band zona) ni olish
+        const hotRes = await fetch(`${API_BASE}/api/traffic/hotspots?threshold=30`);
+        if (hotRes.ok) {
+            const hotData = await hotRes.json();
+            const spots = hotData.hotspots || [];
+            if (spots.length > 0) {
+                const top = spots[0];
+                const el = document.getElementById('hotspotZone');
+                const lvl = document.getElementById('hotspotLevel');
+                const sts = document.getElementById('hotspotStatus');
+                if (el) el.textContent = top.segment_id;
+                if (lvl) lvl.textContent = top.congestion_level.toFixed(1) + '%';
+                if (sts) {
+                    sts.textContent = top.status;
+                    sts.style.color = top.status === 'HEAVY' ? '#ff3366' :
+                                      top.status === 'MODERATE' ? '#ff9500' :
+                                      top.status === 'LIGHT' ? '#ffcc00' : '#00cc66';
+                }
+            } else {
+                const el = document.getElementById('hotspotZone');
+                if (el) el.textContent = 'Tirbandlik yo\'q';
+                const lvl = document.getElementById('hotspotLevel');
+                if (lvl) lvl.textContent = '0%';
+                const sts = document.getElementById('hotspotStatus');
+                if (sts) { sts.textContent = 'FREE'; sts.style.color = '#00cc66'; }
+            }
+        }
+
+        // 2. AI Klasterlarni olish
+        const clRes = await fetch(`${API_BASE}/api/traffic/clusters`);
+        if (clRes.ok) {
+            const clData = await clRes.json();
+            const ci = document.getElementById('clusterInfo');
+            if (ci) {
+                if (clData.status === 'ok') {
+                    const clusters = clData.clusters || [];
+                    const heavy = clusters.find(c => c.level === 'Heavy');
+                    ci.textContent = heavy
+                        ? `${heavy.segment_ids.length} ta og'ir zona`
+                        : `${clusters.length} ta klaster`;
+                } else {
+                    ci.textContent = 'Ma\'lumot yetarli emas';
+                }
+            }
+        }
+    } catch (e) {
+        console.log('AI refresh error:', e.message);
+    }
+}
+window.refreshAI = refreshAI;
+
+function renderDetailRows(rows) {
+    return rows.map((r) => `
+        <div class="detail-row">
+            <span class="label">${r.label}</span>
+            <span class="value">${r.value ?? '-'}</span>
+        </div>
+    `).join('');
+}
+
+
+function showMapDetail(type, payload) {
+    const titleEl = document.getElementById('mapDetailTitle');
+    const bodyEl = document.getElementById('mapDetailBody');
+    if (!titleEl || !bodyEl) {
+        return;
+    }    if (type === 'signal') {
+        titleEl.textContent = `Svetafor ${payload.id || ''}`.trim();
+
+        const rows = [
+            { label: 'Turi', value: payload.source || 'signal' },
+            { label: 'Faza', value: payload.phase || '-' },
+            { label: 'Koord.', value: payload.coord || '-' }
+        ];
+
+        if (payload.timer !== undefined) rows.push({ label: 'Qolgan vaqt', value: `${payload.timer}s` });
+        if (payload.mode) rows.push({ label: 'Rejim', value: payload.mode });
+        if (payload.queue) rows.push({ label: 'Navbat (N/S/E/W)', value: payload.queue });
+
+        bodyEl.innerHTML = renderDetailRows(rows);
+        return;
+    }    if (type === 'road') {
+        titleEl.textContent = payload.name || "Yo'l";
+        bodyEl.innerHTML = renderDetailRows([
+            { label: 'ID', value: payload.id },
+            { label: 'Turi', value: payload.roadType },
+            { label: "Yo'nalish", value: payload.direction },
+            { label: "Yo'laklar", value: payload.lanes },
+            { label: 'Tezlik limiti', value: payload.maxspeed },
+            { label: 'Boshi', value: payload.start },
+            { label: 'Oxiri', value: payload.end },
+            { label: 'Uzunligi', value: payload.length },
+            { label: 'Segmentlar', value: payload.parts }
+        ]);
+        return;
+    }
+
+    titleEl.textContent = 'Tanlangan obyekt';
+    bodyEl.textContent = "Ma'lumot mavjud emas";
+}
+
+function closeMapDetail() {
+    const titleEl = document.getElementById('mapDetailTitle');
+    const bodyEl = document.getElementById('mapDetailBody');
+    if (!titleEl || !bodyEl) {
+        return;
+    }
+    titleEl.textContent = 'Tanlangan obyekt';
+    bodyEl.textContent = "Yo'l yoki svetafor ustiga bosib ma'lumotni ko'ring.";
+}
+
+window.showMapDetail = showMapDetail;
+window.closeMapDetail = closeMapDetail;
+
+// K-Means Clustering logic
+let showClusters = false;
+
+function toggleClusters() {
+    showClusters = !showClusters;
+    document.getElementById('clusterToggle').textContent =
+        showClusters ? 'Klasterlar: Yoqiq' : 'Klasterlar (AI)';
+    
+    if (showClusters) {
+        fetchClusters();
+    } else {
+        if (typeof clearClustersOnMap === 'function') {
+            clearClustersOnMap();
+        }
+    }
+}
+
+async function fetchClusters() {
+    if (!showClusters) return;
+    try {
+        const res = await fetch(`${API_BASE}/api/traffic/clusters`);
+        if (res.ok) {
+            const data = await res.json();
+            if (typeof renderClustersOnMap === 'function') {
+                renderClustersOnMap(data.clusters);
+            }
+        }
+    } catch (e) {
+        console.error('Cluster fetch error', e);
+    }
+}
+
+// Chatbot Logic
+function toggleChatbot() {
+    const widget = document.getElementById('chatbotWidget');
+    widget.classList.toggle('collapsed');
+}
+
+function handleChatKey(event) {
+    if (event.key === 'Enter') {
+        sendChatMessage();
+    }
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value.trim();
+    if (!text) return;
+    
+    input.value = '';
+    appendChatMessage('user', text);
+    
+    try {
+        const res = await fetch(`${API_BASE}/api/chat`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ message: text, user_id: 'driver_web' })
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            appendChatMessage('bot', data.response);
+            
+            if (data.action === 'trigger_emergency') {
+                simulateEmergency();
+            } else if (data.action === 'show_recommendation') {
+                if (typeof drawRecommendationOnMap === 'function') {
+                    drawRecommendationOnMap();
+                }
+            }
+        } else {
+            appendChatMessage('bot', 'Kechirasiz, tarmoqda xatolik yuz berdi.');
+        }
+    } catch (e) {
+        appendChatMessage("bot", "Kechirasiz, serverga ulanib bolmadi.");
+    }
+}
+
+function appendChatMessage(sender, text) {
+    const body = document.getElementById('chatbotBody');
+    const div = document.createElement('div');
+    div.className = `chat-msg ${sender}`;
+    const avatarText = sender === 'bot' ? 'AI' : 'Sen';
+    div.innerHTML = `
+        <div class="chat-avatar">${avatarText}</div>
+        <div class="chat-bubble">${text}</div>
+    `;
+    body.appendChild(div);
+    body.scrollTop = body.scrollHeight;
+}
+
+
+
+

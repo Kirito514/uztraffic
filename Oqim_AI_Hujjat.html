@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<title>OQIM AI - To'liq Texnik Hujjat</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;color:#1a1a2e;line-height:1.7;max-width:850px;margin:0 auto;padding:40px 50px;background:#fff}
+h1{font-size:28px;color:#0f0f23;border-bottom:3px solid #3b82f6;padding-bottom:12px;margin-bottom:8px}
+h2{font-size:21px;color:#1e3a5f;margin-top:36px;margin-bottom:12px;border-left:4px solid #3b82f6;padding-left:12px}
+h3{font-size:16px;color:#334155;margin-top:20px;margin-bottom:8px}
+p{margin-bottom:10px;font-size:14px}
+pre{background:#1e1e2e;color:#cdd6f4;padding:16px;border-radius:8px;overflow-x:auto;font-family:'Fira Code',monospace;font-size:12.5px;line-height:1.6;margin:12px 0}
+code{font-family:'Fira Code',monospace;font-size:12.5px;background:#e8edf3;padding:2px 5px;border-radius:3px}
+pre code{background:none;padding:0}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.5px}
+th{background:#1e3a5f;color:#fff;padding:10px 14px;text-align:left;font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid #e2e8f0}
+tr:nth-child(even){background:#f8fafc}
+.subtitle{color:#64748b;font-size:14px;margin-bottom:30px}
+.comment{color:#6a9955}
+.keyword{color:#c586c0}
+.string{color:#ce9178}
+.highlight{background:#fef3c7;border-left:3px solid #f59e0b;padding:10px 14px;border-radius:4px;margin:12px 0;font-size:13.5px}
+.result-box{background:#ecfdf5;border-left:3px solid #10b981;padding:10px 14px;border-radius:4px;margin:12px 0;font-size:13.5px}
+.diagram{text-align:center;font-family:'Fira Code',monospace;font-size:14px;background:#f1f5f9;padding:16px;border-radius:8px;margin:14px 0;line-height:1.8}
+hr{border:none;border-top:1px solid #e2e8f0;margin:28px 0}
+@media print{body{padding:20px 30px}pre{font-size:11px;padding:10px}h1{font-size:24px}h2{font-size:18px;break-after:avoid}pre,table,.diagram{break-inside:avoid}}
+</style>
+</head>
+<body>
+
+<h1>OQIM AI: To'liq Texnik Hujjat</h1>
+<p class="subtitle">Shahar Trafikini Sun'iy Intellekt Yordamida Boshqarish Tizimi</p>
+
+<h2>Loyiha Haqida Qisqacha</h2>
+<table>
+<tr><th>Parametr</th><th>Qiymat</th></tr>
+<tr><td><strong>Nomi</strong></td><td>OQIM AI</td></tr>
+<tr><td><strong>Maqsadi</strong></td><td>Chorrahalarda tirbandlikni aniqlash va svetoforlarni optimal boshqarish</td></tr>
+<tr><td><strong>Platforma</strong></td><td>Google Colab (Python)</td></tr>
+<tr><td><strong>AI samaradorligi</strong></td><td>Tirbandlikni <strong>95.1%</strong> ga kamaytirdi</td></tr>
+<tr><td><strong>Kelajak (V2X)</strong></td><td>Tirbandlikni <strong>97.1%</strong> ga kamaytirdi</td></tr>
+</table>
+
+<h2>Ishlatilgan Texnologiyalar</h2>
+<table>
+<tr><th>Texnologiya</th><th>Nima uchun kerak</th><th>Qayerda ishlatildi</th></tr>
+<tr><td><strong>Python</strong></td><td>Asosiy dasturlash tili</td><td>Barcha kodlar</td></tr>
+<tr><td><strong>PyTorch</strong></td><td>Neyron tarmoq (Deep Learning) kutubxonasi</td><td>DQN modeli yaratish va o'qitish</td></tr>
+<tr><td><strong>NumPy</strong></td><td>Matematik hisob-kitoblar</td><td>Datalar yaratish, o'rtacha hisoblash</td></tr>
+<tr><td><strong>Matplotlib</strong></td><td>Grafik va diagrammalar chizish</td><td>Reward, Loss va Taqqoslash grafiklari</td></tr>
+<tr><td><strong>Scikit-learn</strong></td><td>Machine Learning algoritmlari</td><td>DBSCAN klasterlash</td></tr>
+</table>
+
+<h2>Loyiha Tuzilishi</h2>
+<pre><code>Bo'lim 1: Kutubxonalar va Sozlamalar
+Bo'lim 2: Chorraha Muhiti (Environment)
+Bo'lim 3: Neyron Tarmoq (DQN Model)
+Bo'lim 4: AI ni O'qitish (Training)
+Bo'lim 5: Natijalar va Isbot (Grafiklar)</code></pre>
+
+<hr>
+
+<h2>Bo'lim 1: Kutubxonalar va Sozlamalar</h2>
+<p>Loyihaga kerak bo'lgan barcha kutubxonalar yuklanadi va asosiy o'rganish parametrlari belgilanadi.</p>
+<pre><code><span class="keyword">import</span> torch              <span class="comment"># Neyron tarmoq yaratish uchun</span>
+<span class="keyword">import</span> torch.nn <span class="keyword">as</span> nn     <span class="comment"># Neyron qatlamlarni yaratish uchun</span>
+<span class="keyword">import</span> torch.optim <span class="keyword">as</span> optim  <span class="comment"># Optimizator</span>
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np        <span class="comment"># Matematik hisob-kitoblar</span>
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt  <span class="comment"># Grafiklar chizish</span>
+<span class="keyword">from</span> sklearn.cluster <span class="keyword">import</span> DBSCAN  <span class="comment"># Tirbandlik klasterlash</span>
+<span class="keyword">from</span> collections <span class="keyword">import</span> deque  <span class="comment"># AI xotirasi</span>
+<span class="keyword">import</span> copy               <span class="comment"># Target Network nusxasi</span></code></pre>
+
+<h3>Sozlamalar (Hyperparameters)</h3>
+<pre><code>EPISODES = 500          <span class="comment"># AI 500 marta o'rganishga urinadi</span>
+BATCH_SIZE = 64         <span class="comment"># Har safar 64 ta tajribadan o'rganadi</span>
+GAMMA = 0.99            <span class="comment"># Kelajakni qanchalik muhim deb biladi (0-1)</span>
+EPSILON_START = 1.0     <span class="comment"># Boshida 100% tasodifiy (hamma narsani sinaydi)</span>
+EPSILON_END = 0.01      <span class="comment"># Oxirida faqat 1% tasodifiy</span>
+EPSILON_DECAY = 0.995   <span class="comment"># Har epizodda tasodifiylik 0.5% kamayadi</span>
+LEARNING_RATE = 0.0005  <span class="comment"># Neyron tarmoq o'rganish tezligi</span>
+MEMORY_SIZE = 5000      <span class="comment"># 5000 ta tajribani eslab qoladi</span>
+TARGET_UPDATE = 10      <span class="comment"># Har 10 epizodda Target tarmoq yangilanadi</span></code></pre>
+
+<hr>
+
+<h2>Bo'lim 2: Chorraha Muhiti (Environment)</h2>
+<p>Real dunyodagi chorrahani matematik model sifatida ifodalaydi. AI <strong>shu muhit ichida</strong> qaror qabul qilishni o'rganadi.</p>
+
+<div class="diagram">
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Shimol (NS)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↓<br>
+G'arb ← &nbsp;🚦&nbsp; → Sharq (EW)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;↑<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Janub (NS)
+</div>
+
+<pre><code><span class="keyword">class</span> Intersection:
+    <span class="keyword">def</span> __init__(self):
+        self.ns_queue = 0      <span class="comment"># Shimol-Janub yo'lidagi mashinalar soni</span>
+        self.ew_queue = 0      <span class="comment"># Sharq-G'arb yo'lidagi mashinalar soni</span>
+        self.step_count = 0    <span class="comment"># Hozir nechanchi tsikl</span>
+        self.max_steps = 60    <span class="comment"># Har epizod 60 tsikl</span></code></pre>
+
+<h3>get_state — AI nimani "ko'radi"?</h3>
+<pre><code><span class="keyword">def</span> get_state(self):
+    <span class="keyword">return</span> np.array([
+        self.ns_queue / 40.0,              <span class="comment"># NS navbatini 0-1 ga normalizatsiya</span>
+        self.ew_queue / 40.0,              <span class="comment"># EW navbatini 0-1 ga normalizatsiya</span>
+        (self.step_count % 10) / 10.0      <span class="comment"># Vaqt tsikli</span>
+    ])</code></pre>
+<div class="highlight"><strong>Nega 40 ga bo'lyapmiz?</strong> Neyron tarmoqlar 0-1 oralig'idagi raqamlar bilan eng yaxshi ishlaydi. 40 ta mashina bo'lsa 1.0 ga teng bo'ladi.</div>
+
+<h3>step — Chorraha qanday ishlaydi?</h3>
+<pre><code><span class="keyword">def</span> step(self, action):
+    ns_incoming = np.random.poisson(8)   <span class="comment"># O'rtacha 8 ta mashina keladi</span>
+    ew_incoming = np.random.poisson(6)   <span class="comment"># O'rtacha 6 ta mashina keladi</span>
+    self.ns_queue += ns_incoming
+    self.ew_queue += ew_incoming
+    
+    <span class="keyword">if</span> action == 0:    ns_pass, ew_pass = 8, 0    <span class="comment"># NS ga qisqa yashil</span>
+    <span class="keyword">elif</span> action == 1:  ns_pass, ew_pass = 0, 8    <span class="comment"># EW ga qisqa yashil</span>
+    <span class="keyword">elif</span> action == 2:  ns_pass, ew_pass = 15, 0   <span class="comment"># NS ga uzun yashil</span>
+    <span class="keyword">else</span>:              ns_pass, ew_pass = 0, 15   <span class="comment"># EW ga uzun yashil</span>
+    
+    <span class="comment"># Mukofot: kamroq mashina kutsa yaxshi</span>
+    total = self.ns_queue + self.ew_queue
+    reward = 10.0 - total * 0.5
+    <span class="comment"># 0 ta mashina = +10 baho, 40 ta mashina = -10 baho</span></code></pre>
+<div class="highlight"><strong>np.random.poisson(8) nima?</strong> Puasson taqsimoti — haqiqiy hayotdagi "tasodifiy kelish" ni modellashtiradi. O'rtacha 8 ta, lekin ba'zan 3, ba'zan 12 ta ham kelishi mumkin.</div>
+
+<hr>
+
+<h2>Bo'lim 3: Neyron Tarmoq (Deep Q-Network)</h2>
+<p>Loyihaning <strong>miyasi</strong> — inson miyasiga o'xshash sun'iy neyron tarmoq.</p>
+
+<pre><code><span class="keyword">class</span> DQN(nn.Module):
+    <span class="keyword">def</span> __init__(self):
+        self.network = nn.Sequential(
+            nn.Linear(3, 128),     <span class="comment"># 1-qatlam: 3 kirish → 128 neyron</span>
+            nn.ReLU(),              <span class="comment"># Aktivatsiya: Manfiy sonlarni 0 qiladi</span>
+            nn.Linear(128, 128),    <span class="comment"># 2-qatlam: 128 → 128 neyron</span>
+            nn.ReLU(),
+            nn.Linear(128, 64),     <span class="comment"># 3-qatlam: 128 → 64 neyron</span>
+            nn.ReLU(),
+            nn.Linear(64, 4)        <span class="comment"># Chiqish: 64 → 4 ta harakat</span>
+        )</code></pre>
+
+<div class="highlight"><strong>Kirish (3 ta son):</strong> NS navbat, EW navbat, vaqt tsikli → <strong>Chiqish (4 ta son):</strong> Har bir harakatning Q-qiymati. AI eng yuqori qiymatli harakatni tanlaydi.</div>
+
+<h3>Replay Memory — AI ning Xotirasi</h3>
+<pre><code><span class="keyword">class</span> ReplayMemory:
+    <span class="keyword">def</span> push(self, state, action, reward, next_state, done):
+        self.memory.append((state, action, reward, next_state, done))
+        <span class="comment"># Har bir tajriba: holat, harakat, baho, keyingi holat, tugadimi?</span>
+    
+    <span class="keyword">def</span> sample(self, batch_size):
+        <span class="keyword">return</span> random.sample(self.memory, batch_size)
+        <span class="comment"># Tasodifiy 64 ta tajribani oladi (ketma-ket emas!)</span></code></pre>
+<div class="highlight"><strong>Nega tasodifiy olish?</strong> Ketma-ket tajribalar o'xshash bo'ladi va neyron tarmoqni "chalg'itadi". Aralash olish barqaror o'rganishni ta'minlaydi.</div>
+
+<hr>
+
+<h2>Bo'lim 4: AI ni O'qitish (Training)</h2>
+
+<h3>Epsilon-Greedy Strategiya</h3>
+<pre><code><span class="keyword">if</span> random.random() < epsilon:
+    action = random.randint(0, 3)          <span class="comment"># Tasodifiy (Eksploratsiya)</span>
+<span class="keyword">else</span>:
+    q_values = model(torch.FloatTensor(state))
+    action = q_values.argmax().item()      <span class="comment"># Eng yaxshi (Eksploatatsiya)</span></code></pre>
+<div class="highlight"><strong>Boshida</strong> epsilon=1.0: 100% tasodifiy (hamma narsani sinaydi). <strong>Oxirida</strong> epsilon=0.01: 99% aqlli qaror, faqat 1% sinab ko'radi.</div>
+
+<h3>Bellman Tenglamasi (O'rganish formulasi)</h3>
+<pre><code><span class="comment"># Hozirgi Q-qiymat</span>
+current_q = model(states).gather(1, actions.unsqueeze(1))
+
+<span class="comment"># Target Network dan kelajakdagi Q-qiymat</span>
+next_q = target_model(next_states).max(1)[0]
+target_q = rewards + GAMMA * next_q * (1 - dones)
+
+<span class="comment"># Q(s,a) = reward + γ × max Q(s', a')</span>
+<span class="comment"># "Hozirgi qaror qiymati = Darhol mukofot + Kelajakdagi eng yaxshi mukofot"</span>
+
+loss = nn.SmoothL1Loss()(current_q, target_q)
+loss.backward()                            <span class="comment"># Xatolikni orqaga tarqatish</span>
+torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)  <span class="comment"># Gradientni cheklash</span>
+optimizer.step()                           <span class="comment"># Neyron og'irliklarini yangilash</span></code></pre>
+
+<div class="highlight"><strong>Target Network</strong> — asosiy modelning "sekin yangilanadigan nusxasi". Har 10 epizodda bir marta yangilanadi. Bu AI o'rganishini barqaror qiladi.</div>
+
+<hr>
+
+<h2>Bo'lim 5: Natijalar va Isbot</h2>
+
+<h3>Training Grafiklari</h3>
+<p><strong>Reward (Baho):</strong> -2319 dan +60 gacha ko'tarildi — AI aqllilashib bordi.</p>
+<p><strong>Loss (Xatolik):</strong> Avval ko'tarilib keyin tushdi — bu normal va to'g'ri. Boshida AI yangi narsalarni kashf qiladi, keyin o'zlashtirib barqarorlashadi.</p>
+
+<h3>3 Bosqichli Taqqoslash</h3>
+<table>
+<tr><th>Bosqich</th><th>O'rtacha kutish</th><th>Samaradorlik</th></tr>
+<tr><td>🔴 <strong>Hozirgi holat</strong> (Fiks svetafor)</td><td>233.2 ta mashina</td><td>—</td></tr>
+<tr><td>🔵 <strong>AI (DQN) ishlagach</strong></td><td>11.4 ta mashina</td><td><strong>95.1%</strong> kamaydi</td></tr>
+<tr><td>🟢 <strong>Kelajak (V2X)</strong></td><td>6.7 ta mashina</td><td><strong>97.1%</strong> kamaydi</td></tr>
+</table>
+
+<div class="result-box">
+<strong>🚀 Yakuniy xulosa:</strong> 233 ta mashina kutib turgan chorrahada AI yoqilgach faqat 11 tasi kutib qoldi. Kelajak V2X texnologiyasi bilan esa faqat 6.7 tasi.
+</div>
+
+<h3>DBSCAN Klasterlash</h3>
+<pre><code>dbscan = DBSCAN(eps=6, min_samples=8)
+<span class="comment"># eps=6: 6 metr radiusda zich joylashgan mashinalarni qidiradi</span>
+<span class="comment"># min_samples=8: Kamida 8 ta mashina bo'lsagina "probka" deb qabul qiladi</span>
+<span class="comment"># labels == -1: Erkin ketayotgan yakka mashinalar (shovqin)</span></code></pre>
+
+<hr>
+
+<h2>Yakuniy Natijalar Jadvali</h2>
+<table>
+<tr><th>Ko'rsatkich</th><th>Qiymati</th></tr>
+<tr><td>Neyron tarmoq qatlamlari</td><td>4 ta (128→128→64→4)</td></tr>
+<tr><td>O'qitish epizodlari</td><td>500</td></tr>
+<tr><td>Boshlang'ich baho (Reward)</td><td>-2319</td></tr>
+<tr><td>Yakuniy baho (Reward)</td><td>+60</td></tr>
+<tr><td>Hozirgi holat (kutish)</td><td>233 ta mashina</td></tr>
+<tr><td>AI holat (kutish)</td><td>11 ta mashina</td></tr>
+<tr><td>Kelajak V2X (kutish)</td><td>6.7 ta mashina</td></tr>
+<tr><td><strong>AI samaradorligi</strong></td><td><strong>95.1%</strong></td></tr>
+<tr><td><strong>Kelajak samaradorligi</strong></td><td><strong>97.1%</strong></td></tr>
+</table>
+
+</body>
+</html>
