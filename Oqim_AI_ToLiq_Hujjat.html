@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="uz">
+
+<head>
+  <meta charset="UTF-8">
+  <title>OQIM AI — To'liq Texnik Hujjat</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f8fafc;
+      color: #1e293b;
+      line-height: 1.7
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #1e3a5f 0%, #1d4ed8 100%);
+      padding: 60px 0;
+      text-align: center;
+      border-bottom: 1px solid #dbeafe
+    }
+
+    .hero h1 {
+      font-size: 42px;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -1px
+    }
+
+    .hero h1 span {
+      color: #93c5fd
+    }
+
+    .hero p {
+      color: #bfdbfe;
+      font-size: 16px;
+      margin-top: 12px
+    }
+
+    .badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      margin: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.3)
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 0 24px
+    }
+
+    .section {
+      padding: 50px 0;
+      border-bottom: 1px solid #e2e8f0
+    }
+
+    .section-title {
+      font-size: 26px;
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 6px
+    }
+
+    .section-subtitle {
+      color: #64748b;
+      font-size: 14px;
+      margin-bottom: 30px
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06)
+    }
+
+    .card h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1d4ed8;
+      margin-bottom: 10px
+    }
+
+    .card p {
+      font-size: 14px;
+      color: #475569
+    }
+
+    pre {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 20px;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      margin: 16px 0;
+      color: #e2e8f0
+    }
+
+    .kw {
+      color: #c678dd
+    }
+
+    .fn {
+      color: #61afef
+    }
+
+    .cm {
+      color: #8896a8;
+      font-style: italic
+    }
+
+    .str {
+      color: #98c379
+    }
+
+    .num {
+      color: #d19a66
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06)
+    }
+
+    th {
+      background: #1e3a5f;
+      color: #bfdbfe;
+      padding: 12px 16px;
+      text-align: left;
+      font-weight: 600
+    }
+
+    td {
+      padding: 10px 16px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #475569;
+      background: #fff
+    }
+
+    tr:hover td {
+      background: #f8fafc
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin: 20px 0
+    }
+
+    .result-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      border: 1px solid #e2e8f0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06)
+    }
+
+    .result-card .val {
+      font-size: 36px;
+      font-weight: 700;
+      color: #1d4ed8
+    }
+
+    .result-card .lbl {
+      font-size: 12px;
+      color: #64748b;
+      margin-top: 4px
+    }
+
+    .result-card .sub {
+      font-size: 13px;
+      color: #0891b2;
+      margin-top: 6px;
+      font-weight: 600
+    }
+
+    .arch-flow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 20px 0
+    }
+
+    .arch-box {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: #1e3a5f;
+      text-align: center;
+      font-weight: 500
+    }
+
+    .arch-arrow {
+      color: #1d4ed8;
+      font-size: 20px;
+      font-weight: 700
+    }
+
+    .formula {
+      background: #eff6ff;
+      border-left: 3px solid #1d4ed8;
+      padding: 16px 20px;
+      border-radius: 0 8px 8px 0;
+      font-family: 'Fira Code', monospace;
+      font-size: 14px;
+      margin: 16px 0;
+      color: #1e3a5f
+    }
+
+    .step {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 20px
+    }
+
+    .step-num {
+      min-width: 36px;
+      height: 36px;
+      background: #1d4ed8;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      flex-shrink: 0
+    }
+
+    .step-body h4 {
+      font-size: 15px;
+      font-weight: 600;
+      color: #0f172a;
+      margin-bottom: 4px
+    }
+
+    .step-body p {
+      font-size: 13px;
+      color: #475569
+    }
+
+    @media print {
+      body {
+        background: #fff
+      }
+
+      .hero {
+        padding: 40px 0
+      }
+
+      pre {
+        background: #1e293b !important
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="hero">
+    <div class="container">
+      <h1><span>OQIM AI</span> — To'liq Texnik Hujjat</h1>
+      <p>Shahar Trafigini Sun'iy Intellekt Yordamida Boshqarish Tizimi</p>
+      <div style="margin-top:20px">
+        <span class="badge">PyTorch 2.x</span>
+        <span class="badge">Deep Q-Network</span>
+        <span class="badge">DBSCAN</span>
+        <span class="badge">Reinforcement Learning</span>
+        <span class="badge">Google Colab</span>
+        <span class="badge">Guruh 4 — Transport</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- 1. KIRISH -->
+    <div class="section">
+      <div class="section-title">1. Loyiha Haqida</div>
+      <div class="section-subtitle">Muammo, maqsad va yechim yo'nalishi</div>
+      <div class="card">
+        <h3>Muammo</h3>
+        <p>Toshkent shahri 400 ming mashinaga mo'ljallangan yo'llarda 770 mingdan ortiq transport harakatlanmoqda.
+          An'anaviy svetaforlar qat'iy vaqt jadvalida ishlaydi — mashina ko'p bo'lsin yoki oz, har 30 sekundda
+          o'zgaradi. Bu yiliga <strong style="color:#f87171">343 million dollar</strong> iqtisodiy zarar keltirmoqda.
+        </p>
+      </div>
+      <div class="card">
+        <h3>Yechim</h3>
+        <p>OQIM AI tizimi <strong style="color:#60a5fa">Deep Q-Network (DQN)</strong> algoritmidan foydalanib,
+          chorrahadagi mashina navbatini real vaqtda o'lchaydi va svetaforni dinamik boshqaradi. Tizim qancha mashina
+          turganini ko'rib, optimal yashil vaqtni o'zi tanlaydi.</p>
+      </div>
+    </div>
+
+    <!-- 2. TEXNOLOGIYALAR -->
+    <div class="section">
+      <div class="section-title">2. Ishlatilgan Texnologiyalar</div>
+      <div class="section-subtitle">Har bir kutubxona qanday vazifa bajaradi</div>
+      <table>
+        <tr>
+          <th>Kutubxona</th>
+          <th>Versiya</th>
+          <th>Vazifasi</th>
+        </tr>
+        <tr>
+          <td>PyTorch</td>
+          <td>2.10+</td>
+          <td>Neyron tarmoq arxitekturasini qurishda, o'qitishda va Bellman tenglamasini hisoblashda</td>
+        </tr>
+        <tr>
+          <td>NumPy</td>
+          <td>1.24+</td>
+          <td>Matematik hisob-kitoblar, massivlar, Poisson taqsimoti</td>
+        </tr>
+        <tr>
+          <td>Matplotlib</td>
+          <td>3.7+</td>
+          <td>Reward grafigi, Loss grafigi, 3-bosqichli taqqoslama diagrammasi</td>
+        </tr>
+        <tr>
+          <td>Scikit-learn</td>
+          <td>1.3+</td>
+          <td>DBSCAN algoritmi orqali tirbandlik klasterlarini aniqlash</td>
+        </tr>
+        <tr>
+          <td>collections.deque</td>
+          <td>(standart)</td>
+          <td>Replay Memory — AI ning o'quv xotirasi (5000 tajriba)</td>
+        </tr>
+        <tr>
+          <td>copy</td>
+          <td>(standart)</td>
+          <td>Target Network uchun asosiy modelning nusxasini yaratish</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 3. MUHIT -->
+    <div class="section">
+      <div class="section-title">3. Chorraha Muhiti (Environment)</div>
+      <div class="section-subtitle">AI qanday "dunyo" da ishlaydi</div>
+
+      <div class="card">
+        <h3>Chorraha Modeli</h3>
+        <p>4 tomonlama chorraha: Shimol-Janub (NS) yo'nalishi va Sharq-G'arb (EW) yo'nalishi. Har tsiklda Puasson
+          taqsimoti bo'yicha mashinalar keladi.</p>
+      </div>
+
+      <pre><span class="kw">class</span> <span class="fn">Intersection</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.ns_queue  = <span class="num">0</span>    <span class="cm"># Shimol-Janub navbatidagi mashinalar</span>
+        self.ew_queue  = <span class="num">0</span>    <span class="cm"># Sharq-G'arb navbatidagi mashinalar</span>
+        self.step_count = <span class="num">0</span>   <span class="cm"># Hozirgi tsikl raqami</span>
+        self.max_steps  = <span class="num">60</span>  <span class="cm"># Har epizod 60 tsikldan iborat</span>
+
+    <span class="kw">def</span> <span class="fn">get_state</span>(self):
+        <span class="kw">return</span> np.array([
+            self.ns_queue / <span class="num">40.0</span>,           <span class="cm"># 0-1 ga normalizatsiya</span>
+            self.ew_queue / <span class="num">40.0</span>,
+            (self.step_count % <span class="num">10</span>) / <span class="num">10.0</span>  <span class="cm"># Vaqt tsikli</span>
+        ])</pre>
+
+      <div class="card">
+        <h3>Puasson Taqsimoti — Mashinalar Kelishi</h3>
+        <p>Har tsiklda qancha mashina kelishi <code>np.random.poisson(8)</code> orqali aniqlanadi. Bu real hayotdagi
+          "tasodifiy kelish" ni modellashtiradi — o'rtacha 8 ta, lekin ba'zan 3, ba'zan 15 ta. Bu real transport
+          statistikasiga eng yaqin matematik model.</p>
+      </div>
+
+      <pre><span class="kw">def</span> <span class="fn">step</span>(self, action):
+    ns_incoming = np.random.poisson(<span class="num">8</span>)  <span class="cm"># O'rtacha 8 mashina NS dan keladi</span>
+    ew_incoming = np.random.poisson(<span class="num">6</span>)  <span class="cm"># O'rtacha 6 mashina EW dan keladi</span>
+    self.ns_queue += ns_incoming
+    self.ew_queue += ew_incoming
+
+    <span class="cm"># 4 ta harakat (action): har biri qaysi yo'nalishga yashil beradi</span>
+    <span class="kw">if</span>   action == <span class="num">0</span>: ns_pass, ew_pass = <span class="num">8</span>,  <span class="num">0</span>   <span class="cm"># NS qisqa yashil</span>
+    <span class="kw">elif</span> action == <span class="num">1</span>: ns_pass, ew_pass = <span class="num">0</span>,  <span class="num">8</span>   <span class="cm"># EW qisqa yashil</span>
+    <span class="kw">elif</span> action == <span class="num">2</span>: ns_pass, ew_pass = <span class="num">15</span>, <span class="num">0</span>   <span class="cm"># NS uzun yashil</span>
+    <span class="kw">else</span>:             ns_pass, ew_pass = <span class="num">0</span>,  <span class="num">15</span>  <span class="cm"># EW uzun yashil</span>
+
+    <span class="cm"># Mukofot formulasi</span>
+    total_queue = self.ns_queue + self.ew_queue
+    reward = <span class="num">10.0</span> - total_queue * <span class="num">0.5</span>  <span class="cm"># Kam mashina = yuqori mukofot</span></pre>
+    </div>
+
+    <!-- 4. NEYRON TARMOQ -->
+    <div class="section">
+      <div class="section-title">4. Neyron Tarmoq Arxitekturasi (DQN)</div>
+      <div class="section-subtitle">AI ning "miyasi" qanday qurilgan</div>
+
+      <div class="arch-flow">
+        <div class="arch-box">Kirish<br><small style="color:#64748b">3 ta son</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">128 neyron<br><small style="color:#64748b">+ ReLU</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">128 neyron<br><small style="color:#64748b">+ ReLU</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">64 neyron<br><small style="color:#64748b">+ ReLU</small></div>
+        <div class="arch-arrow">→</div>
+        <div class="arch-box">Chiqish<br><small style="color:#64748b">4 ta Q-qiymat</small></div>
+      </div>
+
+      <pre><span class="kw">class</span> <span class="fn">DQN</span>(nn.Module):
+    <span class="kw">def</span> <span class="fn">__init__</span>(self):
+        self.network = nn.Sequential(
+            nn.Linear(<span class="num">3</span>,   <span class="num">128</span>),  <span class="cm"># 3 kirish → 128 neyron</span>
+            nn.ReLU(),              <span class="cm"># Manfiy sonlarni 0 qiladi</span>
+            nn.Linear(<span class="num">128</span>, <span class="num">128</span>),  <span class="cm"># 128 → 128</span>
+            nn.ReLU(),
+            nn.Linear(<span class="num">128</span>, <span class="num">64</span>),   <span class="cm"># 128 → 64</span>
+            nn.ReLU(),
+            nn.Linear(<span class="num">64</span>,  <span class="num">4</span>)    <span class="cm"># 64 → 4 ta harakat</span>
+        )</pre>
+
+      <table>
+        <tr>
+          <th>Qatlam</th>
+          <th>Vazifasi</th>
+        </tr>
+        <tr>
+          <td>Linear(3 → 128)</td>
+          <td>3 ta kirish sonini 128 ta neyron bilan qayta ishlaydi</td>
+        </tr>
+        <tr>
+          <td>ReLU</td>
+          <td>Manfiy aktivatsiyalarni 0 ga keltiradi — nochiziqli o'rganish</td>
+        </tr>
+        <tr>
+          <td>Linear(64 → 4)</td>
+          <td>Har bir harakatning Q-qiymatini hisoblaydi</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 5. O'QITISH JARAYONI -->
+    <div class="section">
+      <div class="section-title">5. O'qitish Jarayoni</div>
+      <div class="section-subtitle">AI qanday o'rganadi</div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <h4>Epsilon-Greedy Strategiya</h4>
+          <p>Boshida AI 100% tasodifiy harakat qiladi (Eksploratsiya). Asta-sekin tajriba ortgan sari, AI o'zi bilgan
+            eng yaxshi harakatni tanlaydi (Eksploatatsiya). ε = 1.0 dan 0.01 gacha kamayadi.</p>
+        </div>
+      </div>
+
+      <pre><span class="kw">if</span> random.random() < epsilon:
+    action = random.randint(<span class="num">0</span>, <span class="num">3</span>)          <span class="cm"># Tasodifiy harakat</span>
+<span class="kw">else</span>:
+    q_values = model(torch.FloatTensor(state))
+    action = q_values.argmax().item()       <span class="cm"># Eng yuqori Q-qiymatli harakat</span></pre>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <h4>Replay Memory (Tajriba Xotirasi)</h4>
+          <p>Har bir qadam tajribasi (holat, harakat, mukofot, keyingi holat) xotiraga yoziladi. O'qitishda 64 ta
+            TASODIFIY tajriba olinadi — ketma-ket emas, aralash.</p>
+        </div>
+      </div>
+
+      <pre>memory = deque(maxlen=<span class="num">5000</span>)
+memory.append((state, action, reward, next_state, done))
+
+<span class="cm"># O'qitishda 64 ta tasodifiy tajriba olinadi</span>
+batch = random.sample(memory, BATCH_SIZE)</pre>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <h4>Bellman Tenglamasi</h4>
+          <p>AI ning o'rganish formulasi. Hozirgi qarorning qiymati = darhol mukofot + kelajakdagi eng yaxshi
+            mukofotning hozirgi qiymati.</p>
+        </div>
+      </div>
+
+      <div class="formula">Q(s, a) = r + γ × max Q(s', a')<br><br>
+        γ = 0.99 (Discount Factor — kelajak shuncha muhim)</div>
+
+      <pre>current_q = model(states).gather(<span class="num">1</span>, actions.unsqueeze(<span class="num">1</span>))
+next_q    = target_model(next_states).max(<span class="num">1</span>)[<span class="num">0</span>]
+target_q  = rewards + GAMMA * next_q * (<span class="num">1</span> - dones)
+
+loss = nn.SmoothL1Loss()(current_q, target_q)
+loss.backward()
+torch.nn.utils.clip_grad_norm_(model.parameters(), <span class="num">1.0</span>)
+optimizer.step()</pre>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <h4>Target Network</h4>
+          <p>Asosiy modelning "sekin yangilanadigan nusxasi". Har 10 epizodda bir marta yangilanadi. O'rganishni
+            barqarorlashtiradi — model o'z "soya" siga qarshi o'qimaydi.</p>
+        </div>
+      </div>
+
+      <pre>target_model = copy.deepcopy(model)
+<span class="kw">if</span> episode % <span class="num">10</span> == <span class="num">0</span>:
+    target_model.load_state_dict(model.state_dict())</pre>
+    </div>
+
+    <!-- 6. DBSCAN -->
+    <div class="section">
+      <div class="section-title">6. DBSCAN — Tirbandlik Klasterlash</div>
+      <div class="section-subtitle">Probka zonalarini avtomatik aniqlash</div>
+      <div class="card">
+        <h3>Nima uchun DBSCAN?</h3>
+        <p>Tirbandlik zonalari tartibsiz shaklda bo'ladi. K-Means krug shaklida klaster qidiradi, DBSCAN esa har qanday
+          shaklda zich joylashgan mashinalarni topadi. Shuningdek klaster soni oldindan ma'lum bo'lishi shart emas.</p>
+      </div>
+      <pre>dbscan = DBSCAN(eps=<span class="num">6</span>, min_samples=<span class="num">8</span>)
+labels = dbscan.fit_predict(mashina_koordinatalari)
+<span class="cm"># labels == -1 => Erkin ketayotgan mashina (shovqin)</span>
+<span class="cm"># labels == 0,1,2... => Probka zonasi raqami</span></pre>
+      <table>
+        <tr>
+          <th>Parametr</th>
+          <th>Qiymati</th>
+          <th>Ma'nosi</th>
+        </tr>
+        <tr>
+          <td>eps</td>
+          <td>6</td>
+          <td>6 metr radiusdagi qo'shnilar hisobga olinadi</td>
+        </tr>
+        <tr>
+          <td>min_samples</td>
+          <td>8</td>
+          <td>Kamida 8 ta mashina bo'lsagina "probka" deb qabul qilinadi</td>
+        </tr>
+        <tr>
+          <td>labels = -1</td>
+          <td>—</td>
+          <td>Yolg'iz ketayotgan, probkaga kirmagan mashina</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 7. NATIJALAR -->
+    <div class="section">
+      <div class="section-title">7. Natijalar va Isbot</div>
+      <div class="section-subtitle">3 bosqichli taqqoslama tahlil</div>
+
+      <div class="result-grid">
+        <div class="result-card">
+          <div style="color:#f87171;font-size:13px;margin-bottom:8px">HOZIRGI HOLAT</div>
+          <div class="val" style="color:#f87171">233</div>
+          <div class="lbl">O'rtacha kutayotgan mashina</div>
+          <div class="sub" style="color:#f87171">Fiks svetafor</div>
+        </div>
+        <div class="result-card">
+          <div style="color:#3b82f6;font-size:13px;margin-bottom:8px">AI (DQN) TIZIMI</div>
+          <div class="val">11</div>
+          <div class="lbl">O'rtacha kutayotgan mashina</div>
+          <div class="sub">95.1% kamaydi</div>
+        </div>
+        <div class="result-card">
+          <div style="color:#22d3ee;font-size:13px;margin-bottom:8px">KELAJAK (V2X)</div>
+          <div class="val" style="color:#22d3ee">6.7</div>
+          <div class="lbl">O'rtacha kutayotgan mashina</div>
+          <div class="sub" style="color:#22d3ee">97.1% kamaydi</div>
+        </div>
+      </div>
+
+      <table>
+        <tr>
+          <th>Ko'rsatkich</th>
+          <th>Qiymati</th>
+        </tr>
+        <tr>
+          <td>O'quv epizodlari</td>
+          <td>500</td>
+        </tr>
+        <tr>
+          <td>Boshlang'ich mukofot</td>
+          <td>-2319</td>
+        </tr>
+        <tr>
+          <td>Yakuniy mukofot</td>
+          <td>+60</td>
+        </tr>
+        <tr>
+          <td>Neyron tarmoq qatlamlari</td>
+          <td>128 → 128 → 64 → 4</td>
+        </tr>
+        <tr>
+          <td>Xotira hajmi</td>
+          <td>5000 tajriba</td>
+        </tr>
+        <tr>
+          <td>Batch hajmi</td>
+          <td>64 tajriba</td>
+        </tr>
+        <tr>
+          <td>Learning Rate</td>
+          <td>0.0005</td>
+        </tr>
+        <tr>
+          <td>Gamma (Discount)</td>
+          <td>0.99</td>
+        </tr>
+        <tr>
+          <td>Epsilon boshlanishi</td>
+          <td>1.0 (100% tasodifiy)</td>
+        </tr>
+        <tr>
+          <td>Epsilon oxiri</td>
+          <td>0.01 (1% tasodifiy)</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- 8. ALGORITMLAR JADVALI -->
+    <div class="section">
+      <div class="section-title">8. Algoritmlar Umumiy Jadvali</div>
+      <table>
+        <tr>
+          <th>Algoritm</th>
+          <th>Turi</th>
+          <th>Maqsadi</th>
+          <th>Asosiy Metrika</th>
+        </tr>
+        <tr>
+          <td>DQN (PyTorch)</td>
+          <td>Reinforcement Learning</td>
+          <td>Svetaforni optimal boshqarish</td>
+          <td>Reward, Tirbandlik %</td>
+        </tr>
+        <tr>
+          <td>DBSCAN</td>
+          <td>Unsupervised Clustering</td>
+          <td>Probka zonalarini aniqlash</td>
+          <td>Klaster soni</td>
+        </tr>
+        <tr>
+          <td>Replay Memory</td>
+          <td>DQN komponenti</td>
+          <td>O'rganish barqarorligi</td>
+          <td>Loss (SmoothL1)</td>
+        </tr>
+        <tr>
+          <td>Target Network</td>
+          <td>DQN komponenti</td>
+          <td>Bellman maqsadini barqarorlashtirish</td>
+          <td>Training Curve</td>
+        </tr>
+        <tr>
+          <td>Epsilon-Greedy</td>
+          <td>Strategiya</td>
+          <td>Eksploratsiya/Eksploatatsiya</td>
+          <td>Epsilon qiymati</td>
+        </tr>
+        <tr>
+          <td>SmoothL1Loss</td>
+          <td>Loss Funksiya</td>
+          <td>Gradientlar "portlash" ini oldini olish</td>
+          <td>Loss qiymati</td>
+        </tr>
+        <tr>
+          <td>Gradient Clipping</td>
+          <td>Optimizatsiya</td>
+          <td>O'rganish beqarorligini kamaytirish</td>
+          <td>Grad Norm</td>
+        </tr>
+      </table>
+    </div>
+
+  </div><!-- /container -->
+
+  <div style="text-align:center;padding:30px;color:#334155;font-size:13px;border-top:1px solid #1e293b;margin-top:20px">
+    OQIM AI — Guruh 4 | Sun'iy Intellekt Asoslari | Python Kursi | 2025-2026
+  </div>
+
+</body>
+
+</html>
