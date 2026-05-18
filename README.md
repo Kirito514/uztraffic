@@ -1,6 +1,48 @@
 # Aqlli Shahar Trafik Boshqaruv Tizimi 🚦
 
-# OQIM AI — To'liq Kod va Qatorlar Tahlili
+> Avtoraqam GPS kuzatuv orqali real vaqtda trafik boshqaruv va svetofor optimallashtirish tizimi.
+
+## Xususiyatlar
+
+- 🛰️ **GPS Kuzatuv** — Har bir transport vositasini real vaqtda kuzatish
+- 🚦 **Aqlli Svetofor** — Trafikka moslashgan avtomatik svetofor (DQN)
+- 📊 **Tirbandlik Bashorati** — DBSCAN yordamida tirbandlik zonalarini aniqlash
+- 🚑 **Maxsus Transport Ustuvorligi** — Tez yordam uchun yo'lni oldindan ochish
+- 🗺️ **Live Dashboard** — Interaktiv xarita va statistika
+
+## O'rnatish
+
+```bash
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+## Ishga tushirish
+
+```bash
+python src/simulation/city_simulator.py
+python src/server/main.py
+start web/index.html
+```
+
+## Texnologiyalar
+
+| Texnologiya | Vazifasi |
+|---|---|
+| **Python, FastAPI** | Backend server |
+| **PyTorch** | DQN neyron tarmoq |
+| **Scikit-learn** | DBSCAN klasterlash |
+| **Leaflet.js** | Web xarita |
+| **SQLite / PostgreSQL** | Ma'lumotlar bazasi |
+
+## Litsenziya
+
+MIT License
+
+---
+
+# OQIM AI — To'liq Kod va Qatorlar Tahlili (v2.0)
 
 ---
 
@@ -22,9 +64,9 @@ BATCH_SIZE    = 64
 GAMMA         = 0.99
 EPSILON_START = 1.0
 EPSILON_END   = 0.01
-EPSILON_DECAY = 0.995
+EPSILON_DECAY = 0.99     # v2.0: 0.995 → 0.99 (endi 460-epizodda 0.01 ga yetadi)
 LEARNING_RATE = 0.0005
-MEMORY_SIZE   = 5000
+MEMORY_SIZE   = 10000    # v2.0: 5000 → 10000
 TARGET_UPDATE = 10
 ```
 
@@ -58,11 +100,11 @@ TARGET_UPDATE = 10
 
 `EPSILON_END = 0.01` — Oxirida AI 1% tasodifiy qoladi. `0.0` qilsak — AI yangi sharoitga moslasha olmaydi.
 
-`EPSILON_DECAY = 0.995` — Har epizodda `epsilon × 0.995`. `0.99` qilsak — epsilon tezroq tushadi. `0.999` qilsak — AI uzoq vaqt tasodifiy ishlaydi.
+`EPSILON_DECAY = 0.99` — Har epizodda `epsilon × 0.99`. v2.0 da 0.995 dan 0.99 ga tuzatildi. **Sabab:** 0.995 da epsilon 500 epizodda faqat 0.082 ga tushadi, 0.01 ga yetmaydi. 0.99 da esa ~460-epizodda maqsadga (0.01) yetadi.
 
 `LEARNING_RATE = 0.0005` — Adam optimallashtiruvchining qadami. `0.01` qilsak — model beqaror. `0.00001` qilsak — juda sekin o'rganadi.
 
-`MEMORY_SIZE = 5000` — Xotirada 5000 ta tajriba saqlanadi. `500` qilsak — AI tarixni tez unutadi. `50000` qilsak — ko'p RAM kerak.
+`MEMORY_SIZE = 10000` — Xotirada 10,000 ta tajriba saqlanadi. v2.0 da 5000 dan oshirildi — AI ko'proq tajribadan o'rganadi.
 
 `TARGET_UPDATE = 10` — Har 10 epizodda Target Network yangilanadi. `1` qilsak — maqsad beqaror. `100` qilsak — target juda eskiradi.
 
@@ -76,20 +118,20 @@ class Intersection:
         self.ns_queue   = 0
         self.ew_queue   = 0
         self.step_count = 0
-        self.max_steps  = 60
+        self.max_steps  = 200   # v2.0: 60 → 200
 
     def reset(self):
-        self.ns_queue   = 0
-        self.ew_queue   = 0
+        self.ns_queue   = random.randint(0, 25)  # v2.0: 0 → 0-25
+        self.ew_queue   = random.randint(0, 25)  # v2.0: 0 → 0-25
         self.step_count = 0
         return self.get_state()
 
     def get_state(self):
         return np.array([
-            self.ns_queue / 40.0,
-            self.ew_queue / 40.0,
+            self.ns_queue / 50.0,   # v2.0: 40 → 50
+            self.ew_queue / 50.0,   # v2.0: 40 → 50
             (self.step_count % 10) / 10.0
-        ])
+        ], dtype=np.float32)
 
     def step(self, action):
         ns_incoming = np.random.poisson(8)
@@ -106,7 +148,8 @@ class Intersection:
         self.ew_queue = max(0, self.ew_queue - ew_pass)
 
         total_queue = self.ns_queue + self.ew_queue
-        reward = 10.0 - total_queue * 0.5
+        imbalance = abs(self.ns_queue - self.ew_queue)  # v2.0: balans jarima
+        reward = 10.0 - total_queue * 0.5 - imbalance * 0.3
 
         self.step_count += 1
         done = self.step_count >= self.max_steps
@@ -115,11 +158,15 @@ class Intersection:
 
 ### Muhit kodi — Har bir qator nima qiladi?
 
-`self.ns_queue = 0` — Shimol-Janub navbatidagi mashinalar soni. Noldan boshlanadi. `10` qilsak — epizod allaqachon tirbandlikdan boshlanadi.
+`self.ns_queue = random.randint(0, 25)` — v2.0: Navbat 0-25 orasida tasodifiy boshlanadi. Eski versiyada har safar 0 dan boshlardi — AI faqat "yengil" vaziyatlarni o'rgangan.
 
-`self.max_steps = 60` — Har epizod 60 tsikl. `30` qilsak — AI qisqa muddatli strategiyani o'rganadi. `120` qilsak — har epizod uzoq.
+`self.max_steps = 200` — v2.0: Har epizod 200 tsikl (eski: 60). Real chorrahada 1 soat = ~240 tsikl. AI uzoq muddatli strategiya o'rganadi.
 
-`self.ns_queue / 40.0` — Normalizatsiya. 20 mashina → 0.5, 40+ → 1.0. Neyron tarmoq 0-1 orasida aniq ishlaydi. `1.0` ga bo'lsak — normalizatsiya yo'q, gradient portlashi mumkin.
+`self.ns_queue / 50.0` — Normalizatsiya. 25 mashina → 0.5, 50+ → 1.0. v2.0 da 40 → 50 ga oshirildi.
+
+`imbalance = abs(self.ns_queue - self.ew_queue)` — v2.0 YANGI: Ikki yo'l orasidagi farq hisoblanadi.
+
+`reward = 10.0 - total * 0.5 - imbalance * 0.3` — v2.0: **balans jarima** qo'shildi — bitta yo'lda to'planib qolmaslik uchun.
 
 `np.random.poisson(8)` — Data qayerdan keladi: real sensor emas, matematik model. O'rtacha 8 ta mashina, har safar boshqacha. Bu haqiqiy transport oqimiga mos.
 
@@ -439,64 +486,3 @@ Har parametrga adaptiv o'rganish tezligi. DQN da parametrlar juda farqli — Ada
 ### Target Network — nima uchun? (Bitta model emas)
 Bitta model bilan maqsad va hisob bir joydan — beqarorlik. Target "barqaror nishon" bo'lib xizmat qiladi.
 
-
-Avtoraqam GPS kuzatuv orqali real vaqtda trafik boshqaruv va svetofor optimallashtirish tizimi.
-
-## Xususiyatlar
-
-- 🛰️ **GPS Kuzatuv** - Har bir transport vositasini real vaqtda kuzatish
-- 🚦 **Aqlli Svetofor** - Trafikka moslashgan avtomatik svetofor
-- 📊 **Tirbandlik Bashorati** - AI yordamida trafik bashorati
-- 🚑 **Maxsus Transport Ustuvorligi** - Tez yordam uchun yo'lni oldindan ochish
-- 🗺️ **Live Dashboard** - Interaktiv xarita va statistika
-
-## O'rnatish
-
-```bash
-# Virtual muhit yaratish
-python -m venv venv
-venv\Scripts\activate  # Windows
-
-# Bog'liqliklari o'rnatish
-pip install -r requirements.txt
-```
-
-## Ishga tushirish
-
-```bash
-# Simulyatsiyani ishga tushirish
-python src/simulation/city_simulator.py
-
-# API serverni ishga tushirish
-python src/server/main.py
-
-# Web dashboard'ni ochish
-start web/index.html
-```
-
-## Loyiha Strukturasi
-
-```
-src/
-├── iot/          # GPS datchik simulyatsiyasi
-├── server/       # FastAPI backend
-├── models/       # AI modellari
-├── traffic_control/  # Svetofor boshqaruvi
-├── emergency/    # Maxsus transport moduli
-└── simulation/   # Shahar simulyatori
-
-web/              # Web Dashboard
-tests/            # Testlar
-```
-
-## Texnologiyalar
-
-- **Backend:** Python, FastAPI
-- **AI/ML:** TensorFlow, Scikit-learn
-- **Database:** SQLite (demo), PostgreSQL (production)
-- **Frontend:** HTML/CSS/JS, Leaflet.js
-- **IoT:** MQTT protokoli
-
-## Litsenziya
-
-MIT License

@@ -1,4 +1,4 @@
-# OQIM AI — To'liq Kod va Qatorlar Tahlili
+# OQIM AI — To'liq Kod va Qatorlar Tahlili (v2.0)
 
 ---
 
@@ -20,9 +20,9 @@ BATCH_SIZE    = 64
 GAMMA         = 0.99
 EPSILON_START = 1.0
 EPSILON_END   = 0.01
-EPSILON_DECAY = 0.995
+EPSILON_DECAY = 0.99     # v2.0: 0.995 → 0.99 (endi 460-epizodda 0.01 ga yetadi)
 LEARNING_RATE = 0.0005
-MEMORY_SIZE   = 5000
+MEMORY_SIZE   = 10000    # v2.0: 5000 → 10000 (ko'proq tajriba saqlaydi)
 TARGET_UPDATE = 10
 ```
 
@@ -56,11 +56,11 @@ TARGET_UPDATE = 10
 
 `EPSILON_END = 0.01` — Oxirida AI 1% tasodifiy qoladi. `0.0` qilsak — AI yangi sharoitga moslasha olmaydi.
 
-`EPSILON_DECAY = 0.995` — Har epizodda `epsilon × 0.995`. `0.99` qilsak — epsilon tezroq tushadi. `0.999` qilsak — AI uzoq vaqt tasodifiy ishlaydi.
+`EPSILON_DECAY = 0.99` — Har epizodda `epsilon × 0.99`. v2.0 da 0.995 dan 0.99 ga tuzatildi. **Sabab:** 0.995 da epsilon 500 epizodda faqat 0.082 ga tushadi, 0.01 ga yetmaydi. 0.99 da esa ~460-epizodda maqsadga (0.01) yetadi. `0.999` qilsak — AI uzoq vaqt tasodifiy ishlaydi.
 
 `LEARNING_RATE = 0.0005` — Adam optimallashtiruvchining qadami. `0.01` qilsak — model beqaror. `0.00001` qilsak — juda sekin o'rganadi.
 
-`MEMORY_SIZE = 5000` — Xotirada 5000 ta tajriba saqlanadi. `500` qilsak — AI tarixni tez unutadi. `50000` qilsak — ko'p RAM kerak.
+`MEMORY_SIZE = 10000` — Xotirada 10,000 ta tajriba saqlanadi. v2.0 da 5000 dan oshirildi — AI ko'proq tajribadan o'rganadi. `500` qilsak — AI tarixni tez unutadi. `50000` qilsak — ko'p RAM kerak.
 
 `TARGET_UPDATE = 10` — Har 10 epizodda Target Network yangilanadi. `1` qilsak — maqsad beqaror. `100` qilsak — target juda eskiradi.
 
@@ -74,20 +74,20 @@ class Intersection:
         self.ns_queue   = 0
         self.ew_queue   = 0
         self.step_count = 0
-        self.max_steps  = 60
+        self.max_steps  = 200   # v2.0: 60 → 200
 
     def reset(self):
-        self.ns_queue   = 0
-        self.ew_queue   = 0
+        self.ns_queue   = random.randint(0, 25)  # v2.0: 0 → 0-25
+        self.ew_queue   = random.randint(0, 25)  # v2.0: 0 → 0-25
         self.step_count = 0
         return self.get_state()
 
     def get_state(self):
         return np.array([
-            self.ns_queue / 40.0,
-            self.ew_queue / 40.0,
+            self.ns_queue / 50.0,   # v2.0: 40 → 50
+            self.ew_queue / 50.0,   # v2.0: 40 → 50
             (self.step_count % 10) / 10.0
-        ])
+        ], dtype=np.float32)
 
     def step(self, action):
         ns_incoming = np.random.poisson(8)
@@ -104,7 +104,8 @@ class Intersection:
         self.ew_queue = max(0, self.ew_queue - ew_pass)
 
         total_queue = self.ns_queue + self.ew_queue
-        reward = 10.0 - total_queue * 0.5
+        imbalance = abs(self.ns_queue - self.ew_queue)  # v2.0: balans jarima
+        reward = 10.0 - total_queue * 0.5 - imbalance * 0.3
 
         self.step_count += 1
         done = self.step_count >= self.max_steps
@@ -113,11 +114,15 @@ class Intersection:
 
 ### Muhit kodi — Har bir qator nima qiladi?
 
-`self.ns_queue = 0` — Shimol-Janub navbatidagi mashinalar soni. Noldan boshlanadi. `10` qilsak — epizod allaqachon tirbandlikdan boshlanadi.
+`self.ns_queue = random.randint(0, 25)` — v2.0: Navbat 0-25 orasida tasodifiy boshlanadi. Eski versiyada har safar 0 dan boshlardi — AI faqat "yengil" vaziyatlarni o'rgangan. Endi og'ir vaziyatlarni ham ko'radi.
 
-`self.max_steps = 60` — Har epizod 60 tsikl. `30` qilsak — AI qisqa muddatli strategiyani o'rganadi. `120` qilsak — har epizod uzoq.
+`self.max_steps = 200` — v2.0: Har epizod 200 tsikl (eski: 60). Real chorrahada 1 soat = ~240 tsikl. 200 qadam ~50 minutlik to'liq simulyatsiya. AI uzoq muddatli strategiya o'rganadi.
 
-`self.ns_queue / 40.0` — Normalizatsiya. 20 mashina → 0.5, 40+ → 1.0. Neyron tarmoq 0-1 orasida aniq ishlaydi. `1.0` ga bo'lsak — normalizatsiya yo'q, gradient portlashi mumkin.
+`self.ns_queue / 50.0` — Normalizatsiya. 25 mashina → 0.5, 50+ → 1.0. v2.0 da 40 → 50 ga oshirildi (reset 0-25 bo'lgani uchun). `1.0` ga bo'lsak — normalizatsiya yo'q, gradient portlashi mumkin.
+
+`imbalance = abs(self.ns_queue - self.ew_queue)` — v2.0 YANGI: Ikki yo'l orasidagi farq hisoblanadi. Agar NS da 30, EW da 0 ta mashina bo'lsa, imbalance = 30.
+
+`reward = 10.0 - total * 0.5 - imbalance * 0.3` — v2.0: Eski formulada faqat umumiy navbatga qarardi. Endi bitta yo'lda mashinalar to'planib qolmasligi uchun **balans jarima** ham qo'shildi. Bu AI ni ikki yo'lni teng boshqarishga majbur qiladi.
 
 `np.random.poisson(8)` — Data qayerdan keladi: real sensor emas, matematik model. O'rtacha 8 ta mashina, har safar boshqacha. Bu haqiqiy transport oqimiga mos.
 
