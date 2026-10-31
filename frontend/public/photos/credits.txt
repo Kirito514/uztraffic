@@ -1,0 +1,10 @@
+hero https://images.unsplash.com/photo-1680789337218-aea1b03ccc41 @samigov96
+tcity https://images.unsplash.com/photo-1715966743489-0ac1138420a5 @babanov
+aerial https://images.unsplash.com/photo-1791820737834-39a403176ccf @morekaccino
+nightHw https://images.unsplash.com/photo-1748616064133-4ef4b189268f @mfrazi
+tlNight https://images.unsplash.com/photo-1581677641984-cf14ca58c5ee @tsvetoslav
+tl https://images.unsplash.com/photo-1561476081-f08413541756 @vork
+amb https://images.unsplash.com/photo-1647446732151-5b0cdc252b4d @shellingfordyu
+phone https://images.unsplash.com/photo-1604357209793-fca5dca89f97 @tamas_tuzeskatai
+aerialNight https://images.unsplash.com/photo-1505980107580-8aa7bcd3f8df @pl_gt
+temur https://images.unsplash.com/photo-1774809595422-2efb78ff4b2b @canmehmet

@@ -34,6 +34,7 @@ app = FastAPI(
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WEB_DIR = PROJECT_ROOT / "web"
+FRONT_DIST = PROJECT_ROOT / "frontend" / "dist"   # React landing (npm run build)
 
 app.add_middleware(
     CORSMiddleware,
@@ -49,6 +50,9 @@ if (WEB_DIR / "js").exists():
     app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
 if (WEB_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(WEB_DIR / "assets")), name="assets")
+for _sub in ("_app", "photos", "brand"):
+    if (FRONT_DIST / _sub).exists():
+        app.mount(f"/{_sub}", StaticFiles(directory=str(FRONT_DIST / _sub)), name=f"front-{_sub}")
 
 traffic_analyzer: Optional[TrafficAnalyzer] = None
 congestion_predictor: Optional[CongestionPredictor] = None
@@ -107,6 +111,15 @@ async def shutdown_event():
     print("🛑 Server to'xtatildi")
 
 @app.get("/")
+async def landing():
+    landing_file = FRONT_DIST / "index.html"
+    if not landing_file.exists():
+        landing_file = WEB_DIR / "index.html"
+    if landing_file.exists():
+        return FileResponse(str(landing_file))
+    return {"error": "Landing topilmadi", "expected_path": str(landing_file)}
+
+@app.get("/dashboard")
 async def root():
     index_file = WEB_DIR / "dashboard.html"
     if index_file.exists():

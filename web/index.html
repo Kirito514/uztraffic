@@ -1,96 +1,367 @@
 <!DOCTYPE html>
 <html lang="uz">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OQIM AI - Aqlli Shahar</title>
+  <title>OQIM AI — Toshkent uchun aqlli svetofor</title>
+  <meta name="description" content="OQIM AI — GPS ma’lumotlari va chuqur o‘rganish (DQN) yordamida Toshkent chorrahalaridagi svetoforlarni real vaqtda boshqaruvchi tizim.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Inter:wght@400;500&family=Onest:wght@900&display=swap"
-    rel="stylesheet">
-  <link rel="icon" type="image/png" href="./AI Chip.png">
-  <link rel="stylesheet" href="css/landing.css">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@300;400;500;600&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="icon" href="assets/brand/favicon.ico" sizes="48x48">
+  <link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png">
+  <link rel="manifest" href="assets/brand/site.webmanifest">
+  <meta name="theme-color" content="#0c0b0a">
+  <link rel="stylesheet" href="css/oqim-landing.css">
 </head>
-
 <body>
 
-  <div class="blob-container">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-  </div>
-
-  <nav class="navbar">
-    <div class="logo">
-      <span class="logo-text">OQIM</span>
-      <img src="./AI Chip.png" alt="Oqim Logo" class="logo-icon-img">
-    </div>
-    <a href="dashboard.html" class="nav-btn">Tizimga kirish</a>
-  </nav>
-
-  <header class="hero">
-    <div class="hero-content">
-      <div class="badge">Shahar Trafikini Boshqarishning Kelajagi</div>
-      <h1>Trafikni <span class="gradient-text">Sun'iy Intellekt</span> bilan boshqaring</h1>
-      <p>Real vaqt rejimidagi monitoring, K-Means orqali klasterlash va NLP yordamchisi bilan jihozlangan eng
-        innovatsion aqlli shahar platformasi.</p>
-
-      <div class="cta-group">
-        <a href="dashboard.html" class="btn btn-primary">Dashboardni Ochish <span class="arrow">→</span></a>
-      </div>
-    </div>
-
-    <div class="hero-visual">
-      <div class="glass-card main-card">
-        <div class="card-header">
-          <div class="dots"><span></span><span></span><span></span></div>
-          <span class="status">Live Status</span>
-        </div>
-        <div class="mock-map">
-          <div class="pulse-point p1"></div>
-          <div class="pulse-point p2"></div>
-          <div class="pulse-point p3 alert"></div>
-        </div>
-        <div class="stats-row">
-          <div class="stat"><span>O'rtacha Tezlik</span><strong>42 km/h</strong></div>
-          <div class="stat"><span>Tirbandlik</span><strong class="text-primary">24%</strong></div>
-        </div>
-      </div>
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <a href="#" class="brand" aria-label="OQIM AI bosh sahifa">
+      <img class="brand-logo" src="assets/brand/oqim-horizontal-dark.svg" alt="OQIM AI">
+    </a>
+    <nav class="nav-links" aria-label="Asosiy menyu">
+      <a href="#nega">Nega Oqim</a>
+      <a href="#qanday">Qanday ishlaydi</a>
+      <a href="#imkoniyatlar">Imkoniyatlar</a>
+      <a href="#texnologiya">Texnologiya</a>
+      <a href="#jamoa">Jamoa</a>
+    </nav>
+    <div class="nav-actions">
+      <a href="/gps" class="pill pill-light">GPS</a>
+      <a href="/dashboard" class="pill pill-dark">Jonli xarita</a>
+      <button class="nav-burger" aria-label="Menyuni ochish" aria-expanded="false"><span></span><span></span></button>
     </div>
   </header>
 
-  <section class="features">
-    <div class="feature-card">
-      <div class="icon">💬</div>
-      <h3>NLP Assistant</h3>
-      <p>Haydovchilar bilan o'zbek tilida muloqot qilib, tirbandlik yoki marshrut bo'yicha maslahat beruvchi chatbot.
-      </p>
+  <!-- ============ HERO ============ -->
+  <section class="hero" id="hero">
+    <div class="hero-bg" data-parallax="0.18" aria-hidden="true"></div>
+    <div class="hero-shade" aria-hidden="true"></div>
+
+    <div class="hero-copy">
+      <span class="tag reveal">Toshkent chorrahalari uchun sun’iy intellekt</span>
+      <h1 class="reveal" style="--d:.08s">Tirbandlikni boshqariladigan<br><em>oqimga</em> aylantiramiz</h1>
+      <p class="reveal" style="--d:.16s">GPS ma’lumotlari, chuqur o‘rganish (DQN) va real vaqt tahlili har bir chorrahada yashil chiroq qancha yonishini o‘zi hal qiladi.</p>
+      <div class="hero-cta reveal" style="--d:.24s">
+        <a href="/dashboard" class="btn btn-light">Jonli xaritani ochish</a>
+        <div class="live-meta">
+          <span class="live-dot"></span>
+          <div>
+            <strong>Jonli simulyatsiya</strong>
+            <small>har 2 soniyada yangilanadi</small>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="feature-card">
-      <div class="icon">🤖</div>
-      <h3>AI Klasterlash</h3>
-      <p>K-Means Machine Learning algoritmi orqali shahar yo'llarini xavf darajasiga qarab 3 guruhga (klasterga)
-        ajratish.</p>
+
+    <!-- Dashboard mock -->
+    <div class="app reveal" style="--d:.34s" aria-label="OQIM boshqaruv paneli ko‘rinishi">
+      <aside class="app-side">
+        <div class="app-brand">
+          <img class="app-logo" src="assets/brand/oqim-horizontal-dark.svg" alt="OQIM AI">
+        </div>
+        <div class="app-search"><span>Chorraha qidirish…</span><kbd>⌘K</kbd></div>
+        <p class="app-label">Umumiy</p>
+        <ul class="app-menu">
+          <li><i class="ic ic-home"></i>Bosh sahifa</li>
+          <li class="on"><i class="ic ic-map"></i>Jonli xarita</li>
+          <li><i class="ic ic-light"></i>Chorrahalar</li>
+          <li><i class="ic ic-amb"></i>Tez yordam</li>
+          <li><i class="ic ic-lab"></i>AI Lab</li>
+        </ul>
+        <p class="app-label">Hududlar</p>
+        <ul class="app-menu districts">
+          <li class="on"><b style="--c:#f2a07b"></b>Markaz</li>
+          <li><b style="--c:#4cc38a"></b>Chilonzor</li>
+          <li><b style="--c:#7aa7ff"></b>Yunusobod</li>
+          <li><b style="--c:#f0a43a"></b>Mirzo Ulug‘bek</li>
+          <li><b style="--c:#c792ea"></b>Yakkasaroy</li>
+        </ul>
+      </aside>
+
+      <div class="app-main">
+        <div class="app-top">
+          <div class="crumbs"><span>Hududlar</span>/<span>Markaz</span>/<strong>Jonli xarita</strong></div>
+          <div class="app-top-r">
+            <span class="sync"><i></i>Sinxron · <span id="clock">--:--:--</span></span>
+            <span class="chip">DQN v2.0</span>
+          </div>
+        </div>
+
+        <div class="app-body">
+          <div class="map">
+            <div class="map-canvas">
+              <img src="assets/landing/map-tashkent.jpg" alt="Toshkent markazi: tirbandlik zonalari va svetoforlar">
+              <span class="map-ping" style="--x:52.8%;--y:33.7%"></span>
+              <span class="map-ping red" style="--x:32.6%;--y:36.5%"></span>
+              <span class="map-ping red" style="--x:68.3%;--y:68.2%"></span>
+              <span class="map-ping amber" style="--x:65.3%;--y:16.7%"></span>
+            </div>
+
+            <div class="map-card">
+              <div class="mc-head">
+                <span class="sig" id="sig"><i></i><i></i><i></i></span>
+                <div>
+                  <strong>Chorraha A-12</strong>
+                  <small>Amir Temur xiyoboni</small>
+                </div>
+              </div>
+              <div class="q-row"><span>Shimol–Janub</span><div class="bar"><b id="barNS"></b></div><em id="qNS">0</em></div>
+              <div class="q-row"><span>Sharq–G‘arb</span><div class="bar"><b id="barEW"></b></div><em id="qEW">0</em></div>
+            </div>
+
+            <div class="map-zoom"><button aria-label="Kichraytirish">−</button><span>80%</span><button aria-label="Kattalashtirish">+</button></div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-h">
+              <span class="pi">AI</span>
+              <strong>AI qarori</strong>
+              <span class="x">×</span>
+            </div>
+            <div class="panel-field">Holat: <code id="stateVec">[0.42, 0.18, 0.3]</code></div>
+            <p class="panel-l">Q-qiymatlar</p>
+            <div class="qv" id="qvals">
+              <div><span>NS · 15 s</span><i><b></b></i><em></em></div>
+              <div><span>EW · 15 s</span><i><b></b></i><em></em></div>
+              <div><span>NS · 30 s</span><i><b></b></i><em></em></div>
+              <div><span>EW · 30 s</span><i><b></b></i><em></em></div>
+            </div>
+            <div class="decision">
+              <span class="ok"></span>
+              <div><small>Tanlangan harakat</small><strong id="decision">NS · uzun yashil</strong></div>
+            </div>
+            <p class="panel-l">So‘nggi hodisalar</p>
+            <ul class="events" id="events">
+              <li><i class="g"></i>A-12 fazasi almashdi</li>
+              <li><i class="r"></i>Chorsu: zona aniqlandi</li>
+              <li><i class="a"></i>Tez yordam marshruti</li>
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="feature-card">
-      <div class="icon">🚑</div>
-      <h3>EVP & Ustuvorlik</h3>
-      <p>Tez yordam kabi favqulodda transport vositalariga yashil chiroq (Priority) taqdim etish va ularni nazorat
-        qilish.</p>
+
+    <div class="hero-front" data-parallax="-0.06" aria-hidden="true"></div>
+
+    <div class="hero-foot">
+      <p>Ochiq texnologiyalar<br>asosida qurilgan</p>
+      <ul class="stack">
+        <li>PyTorch</li>
+        <li>FastAPI</li>
+        <li>OpenStreetMap</li>
+        <li>scikit-learn</li>
+        <li>MapLibre</li>
+      </ul>
     </div>
   </section>
 
-  <footer class="footer">
-    <div class="footer-content">
-      <div class="logo">
-        <span class="logo-text">OQIM</span>
-        <img src="./AI Chip.png" alt="Oqim Logo" class="logo-icon-img" style="height: 24px;">
+  <!-- ============ NEGA OQIM ============ -->
+  <section class="section" id="nega">
+    <div class="section-head">
+      <span class="tag tag-dark reveal"><i class="tag-ic"></i>Nega Oqim</span>
+      <h2 class="reveal" style="--d:.08s">Shahar o‘sgani sari,<br>qat’iy vaqtli svetoforlar<br><em>ortda qolmoqda</em></h2>
+    </div>
+
+    <div class="why reveal">
+      <div class="why-art">
+        <div class="flow-card">
+          <div class="flow-head">
+            <strong>Chorraha oqimi</strong>
+            <div class="avatars"><span style="--c:#f2a07b">GPS</span><span style="--c:#9ec7a8">AI</span><span style="--c:#9bb7e8">SV</span></div>
+          </div>
+          <svg class="flow-lines" viewBox="0 0 340 300" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M90 62 V150 M90 150 H170 M170 150 V90 H250 M170 150 V230 H250" />
+          </svg>
+          <div class="node n1"><b style="--c:#7c5cd6"></b><span>GPS signal</span></div>
+          <div class="node n2"><b style="--c:#e08a3c"></b><span>Navbat: 24</span></div>
+          <div class="node n3"><b></b><span>NS yashil</span></div>
+          <div class="node n4"><b></b><span>EW qizil</span></div>
+          <div class="cursor c1"><svg viewBox="0 0 16 16"><path d="M1 1l13 6-6 1.6L6 15z"/></svg><span class="who" style="--c:#f2a07b">O</span></div>
+          <div class="cursor c2"><svg viewBox="0 0 16 16"><path d="M1 1l13 6-6 1.6L6 15z"/></svg><span class="bubble">yashil to‘lqin!</span></div>
+        </div>
       </div>
-      <p>&copy; 2026 OQIM AI - Shahar transporti uchun intellektual yechimlar. Barcha huquqlar himoyalangan.</p>
+      <div class="why-copy">
+        <img class="why-mark" src="assets/brand/oqim-symbol-dark.svg" alt="">
+        <h3>Nega aynan Oqim</h3>
+        <p>Toshkent yo‘llari taxminan 400 ming mashinaga mo‘ljallangan, ammo ularda 770 mingdan ortiq transport harakatlanadi. Har 30 soniyada ko‘r-ko‘rona almashadigan svetofor bunday oqimga ulgurmaydi. <strong>Oqim</strong> har bir chorrahadagi navbatni ko‘radi va yashil chiroqni kerakli yo‘nalishga, kerakli vaqtga beradi.</p>
+        <a href="#qanday" class="btn btn-light">Qanday ishlashini ko‘rish</a>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat reveal"><strong data-count="770000" data-suffix="+">0</strong><span>transport vositasi shahar yo‘llarida</span></div>
+      <div class="stat reveal" style="--d:.08s"><strong data-count="400000">0</strong><span>mashinaga mo‘ljallangan yo‘l sig‘imi</span></div>
+      <div class="stat reveal" style="--d:.16s"><strong data-count="343" data-prefix="$" data-suffix=" mln">0</strong><span>tirbandlikdan yillik iqtisodiy zarar</span></div>
+    </div>
+    <p class="footnote">Raqamlar loyihaning nazariy tadqiqotidagi baholardan olingan.</p>
+  </section>
+
+  <!-- ============ QANDAY ISHLAYDI ============ -->
+  <section class="section" id="qanday">
+    <div class="section-head">
+      <span class="tag tag-dark reveal"><i class="tag-ic"></i>Qanday ishlaydi</span>
+      <h2 class="reveal" style="--d:.08s">Mashinadan svetoforgacha —<br><em>to‘rt qadam</em></h2>
+    </div>
+
+    <ol class="steps">
+      <li class="step reveal">
+        <span class="step-n">01</span>
+        <h4>Ma’lumot</h4>
+        <p>Mashinalar va telefonlardan GPS koordinatalari keladi. Ular OpenStreetMap’dagi haqiqiy Toshkent yo‘llariga bog‘lanadi.</p>
+        <code>lat, lng, tezlik → yo‘l segmenti</code>
+      </li>
+      <li class="step reveal" style="--d:.08s">
+        <span class="step-n">02</span>
+        <h4>Tahlil</h4>
+        <p>DBSCAN algoritmi mashinalar zich to‘plangan joylarni topadi. Natijada shahar xaritasida tirbandlik zonalari belgilanadi.</p>
+        <code>DBSCAN(eps, min_samples) → zonalar</code>
+      </li>
+      <li class="step reveal" style="--d:.16s">
+        <span class="step-n">03</span>
+        <h4>Qaror</h4>
+        <p>Har bir chorrahada DQN neyron tarmog‘i navbatlarni ko‘rib, to‘rtta harakat ichidan eng foydalisini tanlaydi.</p>
+        <code>[NS, EW, vaqt] → argmax Q(s, a)</code>
+      </li>
+      <li class="step reveal" style="--d:.24s">
+        <span class="step-n">04</span>
+        <h4>Ijro</h4>
+        <p>Svetofor fazasi almashadi. Tez yordam yo‘lga chiqsa, marshrutdagi chorrahalar oldindan yashilga o‘tadi.</p>
+        <code>faza ← qaror · yashil to‘lqin</code>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ============ IMKONIYATLAR ============ -->
+  <section class="section" id="imkoniyatlar">
+    <div class="section-head">
+      <span class="tag tag-dark reveal"><i class="tag-ic"></i>Imkoniyatlar</span>
+      <h2 class="reveal" style="--d:.08s">Bitta tizim —<br><em>butun shahar</em> uchun</h2>
+    </div>
+
+    <div class="bento">
+      <article class="tile t-wide reveal">
+        <div class="tile-copy">
+          <h4>Aqlli svetofor</h4>
+          <p>Har chorrahada o‘qitilgan DQN agenti: 3 ta kirish, 4 ta harakat, 500 epizodlik tajriba.</p>
+        </div>
+        <div class="tile-viz qbars" id="tileQ">
+          <div><i style="--h:38%"></i><span>NS 15</span></div>
+          <div><i style="--h:26%"></i><span>EW 15</span></div>
+          <div class="best"><i style="--h:86%"></i><span>NS 30</span></div>
+          <div><i style="--h:52%"></i><span>EW 30</span></div>
+        </div>
+      </article>
+
+      <article class="tile reveal" style="--d:.08s">
+        <div class="tile-copy">
+          <h4>Tirbandlik zonalari</h4>
+          <p>Zichlikka asoslangan klasterlash shovqindan haqiqiy tirbandlikni ajratadi.</p>
+        </div>
+        <canvas class="tile-viz dbscan" id="dbscan" width="560" height="300" aria-hidden="true"></canvas>
+      </article>
+
+      <article class="tile reveal">
+        <div class="tile-copy">
+          <h4>Tez yordam uchun yashil to‘lqin</h4>
+          <p>Marshrutdagi svetoforlar mashina yetib kelishidan 30 soniya oldin yashilga o‘tadi.</p>
+        </div>
+        <svg class="tile-viz wave" viewBox="0 0 520 200" aria-hidden="true">
+          <path class="wave-road" d="M20 160 C120 160 140 60 240 60 S380 140 500 40" />
+          <path class="wave-run" d="M20 160 C120 160 140 60 240 60 S380 140 500 40" />
+          <g class="wave-lights">
+            <circle cx="96" cy="150" r="7" /><circle cx="196" cy="74" r="7" /><circle cx="318" cy="96" r="7" /><circle cx="440" cy="76" r="7" />
+          </g>
+        </svg>
+      </article>
+
+      <article class="tile reveal" style="--d:.08s">
+        <div class="tile-copy">
+          <h4>GPS kuzatuv</h4>
+          <p>Har qanday telefon brauzer orqali tizimga real mashina sifatida qo‘shila oladi.</p>
+        </div>
+        <div class="tile-viz gps">
+          <span class="gps-ring"></span><span class="gps-ring r2"></span><span class="gps-dot"></span>
+          <code>41.3111° N · 69.2797° E</code>
+        </div>
+      </article>
+
+      <article class="tile reveal" style="--d:.16s">
+        <div class="tile-copy">
+          <h4>O‘zbek tilidagi yordamchi</h4>
+          <p>Haydovchi oddiy tilda so‘raydi — tizim xaritadagi jonli ma’lumot asosida javob beradi.</p>
+        </div>
+        <div class="tile-viz chat">
+          <p class="msg me">Chilonzorda hozir tirbandlik bormi?</p>
+          <p class="msg ai">Ha, Chilonzor metrosi atrofida o‘rtacha. Bunyodkor shoh ko‘chasi orqali borsangiz, taxminan 6 daqiqa tejaysiz.</p>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ TEXNOLOGIYA ============ -->
+  <section class="section tech" id="texnologiya">
+    <div class="tech-grid">
+      <div class="tech-copy">
+        <span class="tag tag-dark reveal"><i class="tag-ic"></i>Texnologiya</span>
+        <h2 class="reveal" style="--d:.08s">Ichkarida —<br><em>Deep Q-Network</em></h2>
+        <p class="reveal" style="--d:.16s">Agent avval tasodifiy harakat qilib o‘rganadi (ε = 1.0). Har epizodda ε 1% ga kamayadi va taxminan 459-epizodda 0.01 ga yetadi. Barqarorlik uchun Huber yo‘qotish funksiyasi, target tarmoq va tajriba xotirasi ishlatiladi.</p>
+        <dl class="params reveal" style="--d:.24s">
+          <div><dt>γ</dt><dd>0.99</dd></div>
+          <div><dt>ε decay</dt><dd>0.99</dd></div>
+          <div><dt>lr</dt><dd>5·10⁻⁴</dd></div>
+          <div><dt>batch</dt><dd>64</dd></div>
+          <div><dt>xotira</dt><dd>10 000</dd></div>
+          <div><dt>target</dt><dd>har 10 ep.</dd></div>
+        </dl>
+      </div>
+      <div class="tech-viz reveal" style="--d:.12s">
+        <div class="eps-card">
+          <div class="eps-h"><span>ε — tasodifiylik</span><code id="epsVal">ε = 1.000</code></div>
+          <svg viewBox="0 0 460 220" id="epsChart" aria-label="Epsilon kamayish grafigi">
+            <g class="grid"><line x1="40" y1="20" x2="40" y2="190"/><line x1="40" y1="190" x2="450" y2="190"/></g>
+            <path class="eps-floor" d="M40 186 H450"/>
+            <path class="eps-line" id="epsLine" d=""/>
+            <circle class="eps-dot" id="epsDot" r="5" cx="40" cy="20"/>
+            <text x="40" y="210">0</text><text x="245" y="210" text-anchor="middle">250</text><text x="450" y="210" text-anchor="end">500 epizod</text>
+          </svg>
+          <div class="arch">
+            <span>3</span><i></i><span>128</span><i></i><span>128</span><i></i><span>64</span><i></i><span class="out">4</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ JAMOA / CTA ============ -->
+  <section class="cta" id="jamoa">
+    <div class="cta-bg" aria-hidden="true"></div>
+    <div class="cta-in">
+      <span class="tag reveal">Guruh 4 · Sun’iy intellekt asoslari</span>
+      <h2 class="reveal" style="--d:.08s">Shahar oqimini<br><em>birga boshqaraylik</em></h2>
+      <p class="reveal" style="--d:.16s">Jonli xaritani oching, chorrahani tanlang va AI qanday qaror qabul qilayotganini o‘z ko‘zingiz bilan kuzating.</p>
+      <div class="cta-btns reveal" style="--d:.24s">
+        <a href="/dashboard" class="btn btn-light">Jonli xaritani ochish</a>
+        <a href="/docs" class="btn btn-ghost">API hujjatlari</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="foot">
+    <div class="foot-in">
+      <a href="#" class="brand" aria-label="OQIM AI"><img class="brand-logo" src="assets/brand/oqim-horizontal-dark.svg" alt="OQIM AI"></a>
+      <nav>
+        <a href="/dashboard">Jonli xarita</a>
+        <a href="/gps">GPS kuzatuv</a>
+        <a href="/docs">API</a>
+      </nav>
+      <p>© 2026 OQIM AI · Guruh 4. Xarita ma’lumotlari © OpenStreetMap hissadorlari.</p>
     </div>
   </footer>
 
+  <script src="js/landing.js" defer></script>
 </body>
-
 </html>

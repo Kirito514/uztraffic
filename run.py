@@ -10,6 +10,11 @@ import os
 import time
 from pathlib import Path
 
+# Windows konsoli (cp1251) banner va emoji'larda yiqilmasin
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 # Loyiha root papkasi
 ROOT_DIR = Path(__file__).parent
 sys.path.insert(0, str(ROOT_DIR))
