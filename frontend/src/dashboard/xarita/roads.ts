@@ -65,8 +65,9 @@ export function roadFeatures(list: Tile[]) {
 
 const mark = (geometry: GeoJSON.LineString, o: number, kind: 'lane' | 'center'): GeoJSON.Feature => ({ type: 'Feature', geometry, properties: { o, kind } })
 
-/* Metrni ekran pikseliga: zoom bilan eksponensial o‘sadi (Toshkent kengligida, ~41.3°) */
-const PX_PER_M_Z0 = 1 / (156543.03392 * Math.cos((41.31 * Math.PI) / 180))
+/* Metrni ekran pikseliga: zoom bilan eksponensial o‘sadi (Toshkent kengligida, ~41.3°).
+   MapLibre zoom’i 512 px kataklarga asoslangan: 0-zoomda 1 px = 78 271.5 m (256 px’li 156 543 emas). */
+const PX_PER_M_Z0 = 1 / (78271.51696 * Math.cos((41.31 * Math.PI) / 180))
 export const metres = (prop: string, extra = 0) =>
   [
     'interpolate',

@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils'
 import { LEVEL, SPOTS } from './sample'
 import { loadIndex, loadTile, metres, roadFeatures, tilesIn } from './roads'
 import type { ResolvedStyle } from './mapSettings'
+import { createCarLayer } from './sim/carLayer'
+import { mercX, mercY, ORIGIN_X, ORIGIN_Y, type FromWorker, type ToWorker } from './sim/protocol'
 
 /* Jonli xarita (MapLibre + OpenFreeMap, kalitsiz). Ustida o‘zimizning qatlamlar:
    yaqinlashtirganda ko‘chalar haqiqiy kenglikdagi asfalt va bo‘lak chiziqlari bilan chiziladi
@@ -77,6 +79,7 @@ async function loadStyle(p: Palette): Promise<StyleSpecification> {
 const LABEL_LAYERS = ['highway-name-path', 'highway-name-minor', 'highway-name-major']
 const ROAD_LAYERS = ['city-surface', 'city-center', 'city-lane']
 const ROADS_FROM = 14.5 // bundan uzoqda o‘zimizning ko‘chalar yuklanmaydi — asosiy xarita yetarli
+const CARS_FROM = 15 // mashinalar shu zoomdan yaqinda yuradi (uzoqda — keyinchalik oqim ranglari)
 
 const spots = (): GeoJSON.FeatureCollection => ({
   type: 'FeatureCollection',
@@ -114,6 +117,7 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
   pick.current = onSelect
   const ready = useRef(false)
   const syncing = useRef(0)
+  const sim = useRef<{ worker: Worker; cars: ReturnType<typeof createCarLayer> } | null>(null)
   const pending = useRef({ selected, labels, lanes })
   pending.current = { selected, labels, lanes }
   const palette = STYLES[mapStyle]
@@ -142,6 +146,7 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
         m.on('load', () => {
           const mm = m!
           addRoads(mm, palette)
+          addCars(mm)
           addSpots(mm, palette.dark)
           ready.current = true
           applyVisibility(mm, pending.current.labels, pending.current.lanes)
@@ -150,7 +155,10 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
           syncRoads(mm)
         })
         m.on('moveend', () => syncRoads(m!))
+        m.on('zoomend', () => runCars(m!))
       })
+    const onVisibility = () => map.current && runCars(map.current)
+    document.addEventListener('visibilitychange', onVisibility)
     // sidebar yig‘ilganda yoki oyna o‘lchami o‘zgarganda xarita cho‘zilib qolmasin
     const ro = new ResizeObserver(() => m?.resize())
     if (el.current) ro.observe(el.current)
@@ -158,9 +166,14 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
       alive = false
       ready.current = false
       ro.disconnect()
+      document.removeEventListener('visibilitychange', onVisibility)
+      sim.current?.worker.terminate()
+      sim.current = null
       m?.remove()
       map.current = null
     }
+    // xarita faqat uslub o‘zgarganda qayta yaratiladi; ichki yordamchilar ref’lar orqali eng so‘nggi holatni o‘qiydi
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [palette])
 
   useEffect(() => {
@@ -215,6 +228,27 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
     )
   }
 
+  /* mashinalar: hisob — alohida oqimda, chizish — GPU qatlamida */
+  function addCars(m: MLMap) {
+    const worker = new Worker(new URL('./sim/worker.ts', import.meta.url), { type: 'module' })
+    // dev’da simulyatsiya statistikasi konsoldan ko‘rinadi: window.__sim
+    const cars = createCarLayer(import.meta.env.DEV ? (st) => ((window as unknown as { __sim: unknown }).__sim = st) : undefined)
+    worker.onmessage = (e: MessageEvent<FromWorker>) => cars.push(e.data)
+    sim.current = { worker, cars }
+    const beforeId = m.getStyle().layers.find((l) => l.type === 'symbol')?.id
+    m.addLayer(cars.layer, beforeId)
+    runCars(m)
+  }
+
+  const send = (msg: ToWorker) => sim.current?.worker.postMessage(msg)
+
+  /* yaqinda va tab ko‘rinib turganda yuradi; aks holda oqim to‘xtaydi (CPU sarflanmaydi) */
+  function runCars(m: MLMap) {
+    const on = m.getZoom() >= CARS_FROM && document.visibilityState === 'visible'
+    send({ type: 'run', running: on })
+    sim.current?.cars.setVisible(m.getZoom() >= CARS_FROM)
+  }
+
   function addSpots(m: MLMap, dark: boolean) {
     m.addSource('spots', { type: 'geojson', data: spots() })
     m.addLayer({
@@ -260,6 +294,12 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
     const keys = tilesIn(idx, b.getWest(), b.getSouth(), b.getEast(), b.getNorth())
     const list = await Promise.all(keys.map(loadTile))
     if (run !== syncing.current || map.current !== m) return // orada yangi siljish boshlangan
+    send({ type: 'tiles', tiles: Object.fromEntries(keys.map((k, i) => [k, list[i]])) })
+    // mashinalar ekran va uning atrofida (har tomonga yarim ekran zaxira) — ko‘rinmaydigan joyda hisob yo‘q
+    const x0 = mercX(b.getWest()) - ORIGIN_X, x1 = mercX(b.getEast()) - ORIGIN_X
+    const y0 = mercY(b.getNorth()) - ORIGIN_Y, y1 = mercY(b.getSouth()) - ORIGIN_Y
+    const mx = (x1 - x0) * 0.5, my = (y1 - y0) * 0.5
+    send({ type: 'view', box: [x0 - mx, y0 - my, x1 + mx, y1 + my], screen: [x0, y0, x1, y1] })
     const { surface, marks } = roadFeatures(list)
     ;(m.getSource('city-surface') as GeoJSONSource | undefined)?.setData(surface)
     ;(m.getSource('city-marks') as GeoJSONSource | undefined)?.setData(marks)
