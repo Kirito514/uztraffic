@@ -12,11 +12,15 @@ export const LINKS = [
   { href: '#aloqa', label: 'Aloqa' },
 ]
 
-/* Scroll holati: `past` — sahifa ekran balandligining `threshold` qismidan pastga aylantirilgan */
+/* Scroll holati: `past` — sahifa ekran balandligining `threshold` qismidan pastga aylantirilgan.
+   Gisterezis: qaytish chegarasi yarmida — chegara atrofida to‘xtaganda navbar miltillamaydi */
 export function useNavScroll(threshold = 0.72) {
   const { scrollY } = useScroll()
   const [past, setPast] = useState(false)
-  useMotionValueEvent(scrollY, 'change', (y) => setPast(y > window.innerHeight * threshold))
+  useMotionValueEvent(scrollY, 'change', (y) => {
+    const on = window.innerHeight * threshold
+    setPast((p) => (p ? y > on * 0.5 : y > on))
+  })
   return { past }
 }
 
