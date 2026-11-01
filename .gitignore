@@ -14,3 +14,9 @@ brand/brandbook/*.pdf
 brand/*.png
 brand/fonts/*.png
 brand/logo/wordmark-variants/_*.png
+
+# OSM ko'chalar: scripts/fetch_tashkent_osm.py yuklaydi, scripts/build_city_tiles.py kataklarga bo'ladi
+cache/osm_parts/
+cache/tashkent_drive.osm
+cache/*.json
+frontend/public/city/

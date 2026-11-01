@@ -1,18 +1,42 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { MotionConfig } from 'motion/react'
+import { useCallback, useEffect, useState, type ComponentType } from 'react'
+import { AnimatePresence, MotionConfig, motion } from 'motion/react'
 import { Icon } from '@iconify/react'
-import { Sidebar, NAV } from './Sidebar'
-import { Topbar } from './Topbar'
-import { MapCard, type MapHandle } from './MapCard'
-import { EmergencyCard, EventsCard, IntersectionTable, Kpis, StatusCard, WaitChart } from './Panels'
-import { useDashboard } from './useDashboard'
-import type { LatLng } from './types'
+import { Sidebar, ALL_PAGES, type PageId } from './Sidebar'
+import { useRoute } from './router'
+import { CARD, ChromeContext, glassClass, type Chrome } from './chrome'
+import { cn } from '@/lib/utils'
+import { XaritaPage } from './pages/XaritaPage'
+import { ChorrahalarPage } from './pages/ChorrahalarPage'
+import { TahlilPage } from './pages/TahlilPage'
+import { TezYordamPage } from './pages/TezYordamPage'
+import { HodisalarPage } from './pages/HodisalarPage'
+import { SozlamalarPage } from './pages/SozlamalarPage'
+import { useTheme } from './theme'
 
+const PAGES: Record<PageId, ComponentType> = {
+  xarita: XaritaPage,
+  chorrahalar: ChorrahalarPage,
+  tahlil: TahlilPage,
+  'tez-yordam': TezYordamPage,
+  hodisalar: HodisalarPage,
+  sozlamalar: SozlamalarPage,
+}
+const IDS = ALL_PAGES.map((n) => n.id)
+
+/* Dashboard qobig‘i: sidebar + sarlavha; har bo‘lim alohida sahifa (/dashboard/<id>) */
 export function Dashboard() {
-  const { snap, source, series, city, setMode, startEmergency, cancelEmergency } = useDashboard()
-  const [selected, setSelected] = useState<string | null>(null)
-  const [active, setActive] = useState('xarita')
-  const map = useRef<MapHandle>(null)
+  const [page, go] = useRoute(IDS)
+  const label = ALL_PAGES.find((n) => n.id === page)!.label
+  const Page = PAGES[page]
+  const [chrome, setChrome] = useState<Chrome>(CARD)
+  const [actions, setActions] = useState<HTMLElement | null>(null)
+  const glassSidebar = chrome.full && chrome.sidebar === 'glass'
+  const { tone } = useTheme()
+  const dark = chrome.full ? chrome.glass === 'dark' : tone === 'dark'
+
+  useEffect(() => {
+    document.title = `${label} — OQIM`
+  }, [label])
 
   // yig‘ilgan sidebar holati brauzerda eslab qolinadi; “[” tugmasi bilan ham almashadi
   const [collapsed, setCollapsed] = useState(() => {
@@ -41,82 +65,49 @@ export function Dashboard() {
     return () => removeEventListener('keydown', onKey)
   }, [toggleSidebar])
 
-  const navigate = (id: string) => {
-    setActive(id)
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-  const focus = useCallback((id: string) => map.current?.focus(id), [])
-  const route = useCallback((a: LatLng, b: LatLng) => startEmergency(a, b), [startEmergency])
-
-  // scroll bo‘yicha sidebar’dagi faol bo‘lim: yuqori qismi ekranning 35% chizig‘idan o‘tgan eng pastki bo‘lim
-  useEffect(() => {
-    const onScroll = () => {
-      const line = innerHeight * 0.35
-      let best = NAV[0].id
-      let bestTop = -Infinity
-      for (const n of NAV) {
-        const top = document.getElementById(n.id)?.getBoundingClientRect().top
-        if (top !== undefined && top <= line && top > bestTop) {
-          best = n.id
-          bestTop = top
-        }
-      }
-      setActive(best)
-    }
-    onScroll()
-    addEventListener('scroll', onScroll, { passive: true })
-    return () => removeEventListener('scroll', onScroll)
-  }, [snap === null])
-
   return (
     <MotionConfig reducedMotion="user">
-      <div className="flex min-h-svh gap-5 bg-mist p-3 pr-3 md:pr-5">
-        <Sidebar active={active} collapsed={collapsed} onNavigate={navigate} onToggle={toggleSidebar} />
+      <ChromeContext.Provider value={{ chrome, setChrome, actions }}>
+        {/* full: fon (xarita) sahifaning o‘zida, qobiq ustidan o‘tkazuvchan — faqat boshqaruvlar bosiladi */}
+        <div className={cn('relative z-10 flex min-h-svh gap-5 p-3 pr-3 md:pr-5', chrome.full ? 'pointer-events-none h-svh' : dark ? 'bg-[#121110] text-krem' : 'bg-mist')}>
+          <Sidebar active={page} collapsed={collapsed} onNavigate={go} onToggle={toggleSidebar} surface={glassSidebar ? `glass-${chrome.glass}` : 'solid'} />
 
-        <main className="min-w-0 flex-1 py-3 pl-2 lg:pl-0">
-          {/* telefon: ixcham sarlavha */}
-          <div className="mb-4 flex items-center justify-between lg:hidden">
-            <a href="/" aria-label="OQIM bosh sahifa">
-              <img src="/brand/oqim-horizontal.svg" alt="OQIM" className="h-10 w-auto" />
-            </a>
-            <a href="/gps" className="inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[13px] font-medium text-krem">
-              <Icon icon="tabler:device-mobile" className="size-4" /> GPS
-            </a>
-          </div>
-
-          <Topbar mode={snap?.mode ?? 'ai'} source={source} intersections={snap?.intersections ?? []} onMode={setMode} onPick={focus} />
-
-          {!snap ? (
-            <div className="mt-6 grid h-[60svh] place-items-center rounded-[28px] bg-white text-[14px] text-ash ring-1 ring-inset ring-line">
-              <span className="flex items-center gap-2">
-                <span className="size-2 animate-pulse rounded-full bg-orik" /> Shahar yuklanmoqda…
-              </span>
+          <main className="flex min-w-0 flex-1 flex-col py-3 pl-2 lg:pl-0">
+            {/* telefon: ixcham sarlavha */}
+            <div className="pointer-events-auto mb-4 flex items-center justify-between lg:hidden">
+              <a href="/" aria-label="OQIM bosh sahifa">
+                <img src="/brand/oqim-horizontal.svg" alt="OQIM" className="h-10 w-auto" />
+              </a>
             </div>
-          ) : (
-            <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-              <div className="min-w-0 space-y-4">
-                <MapCard ref={map} snap={snap} city={city} selected={selected} onSelect={setSelected} onRoute={route} />
-                <div className="grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-                  <WaitChart series={series} />
-                  <StatusCard snap={snap} />
+
+            {/* sahifa almashganda: tez, bouncesiz o‘tish — eskisi so‘nadi, yangisi biroz pastdan chiqadi */}
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={page}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, transition: { duration: 0.12 } }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.35 }}
+                className="flex flex-1 flex-col"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <header className={cn(chrome.full && cn('pointer-events-auto self-start rounded-[22px] px-5 py-3', glassClass(chrome.glass)))}>
+                    <p className={cn('flex items-center gap-1.5 text-[13px]', dark ? 'text-krem/60' : 'text-ash')}>
+                      Toshkent <Icon icon="tabler:chevron-right" className="size-3.5" /> Markaz
+                    </p>
+                    <h1 className="mt-1 font-display text-[clamp(28px,3vw,38px)] font-bold leading-none tracking-[-0.035em]">{label}</h1>
+                  </header>
+                  {/* sahifaning o‘z tugmalari (xaritada: rejim, sozlamalar…) — sarlavha bilan bir qatorda */}
+                  <div ref={setActions} className="pointer-events-auto flex items-center gap-2" />
                 </div>
-                <IntersectionTable snap={snap} onFocus={focus} />
-              </div>
-              <div className="space-y-4">
-                <Kpis snap={snap} />
-                <EmergencyCard snap={snap} onPick={() => map.current?.pick()} onCancel={cancelEmergency} />
-                <EventsCard events={snap.events} onFocus={focus} />
-              </div>
-            </div>
-          )}
-
-          {source === 'mock' && (
-            <p className="mt-6 text-center text-[12px] text-ash">
-              Namunaviy rejim: haqiqiy Toshkent ko‘chalari (OSM), trafik esa brauzer ichidagi simulyatsiya.
-            </p>
-          )}
-        </main>
-      </div>
+                <div className={cn('flex min-h-0 flex-1 flex-col', chrome.full ? 'mt-3' : 'mt-6')}>
+                  <Page />
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          </main>
+        </div>
+      </ChromeContext.Provider>
     </MotionConfig>
   )
 }

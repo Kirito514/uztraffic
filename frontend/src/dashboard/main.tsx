@@ -1,11 +1,13 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import 'maplibre-gl/dist/maplibre-gl.css'
 import '../index.css'
 import { Dashboard } from './Dashboard'
+import { ThemeProvider } from './theme'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <Dashboard />
+    <ThemeProvider>
+      <Dashboard />
+    </ThemeProvider>
   </StrictMode>,
 )

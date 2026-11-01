@@ -3,12 +3,13 @@ import { defineConfig, type Plugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 
-/* Dev serverda /dashboard → dashboard.html (prod’da buni FastAPI qiladi) */
+/* Dev serverda /dashboard va /dashboard/<sahifa> → dashboard.html (prod’da buni FastAPI qiladi) */
 const dashboardRoute = (): Plugin => ({
   name: 'oqim-dashboard-route',
   configureServer(server) {
     server.middlewares.use((req, _res, next) => {
-      if (req.url && /^\/dashboard\/?(\?|$)/.test(req.url)) req.url = req.url.replace(/^\/dashboard\/?/, '/dashboard.html')
+      const m = req.url?.match(/^\/dashboard(?:\/[a-z-]+)?\/?(\?.*)?$/)
+      if (m) req.url = `/dashboard.html${m[1] ?? ''}`
       next()
     })
   },
