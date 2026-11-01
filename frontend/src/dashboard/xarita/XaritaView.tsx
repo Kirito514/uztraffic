@@ -109,6 +109,7 @@ export function XaritaView({ selected, onSelect, settings, onSettings, layout, t
         labels={settings.labels}
         lanes={settings.lanes}
         cars={settings.cars}
+        traffic={settings.traffic}
         density={settings.density}
         selected={selected}
         onSelect={select}

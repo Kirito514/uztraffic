@@ -10,6 +10,8 @@ Har bir ko'cha (yo'nalishsiz, bir marta):
   l  — [oldinga, orqaga] bo'laklar soni (bir tomonlamada orqaga = 0)
   h  — OSM highway turi,  s — tezlik chegarasi (km/soat),  nm — nomi
 Tugunlar: id -> [lng, lat, svetofor(0/1)] — svetofor OSM'dagi highway=traffic_signals.
+Svetofor nuqtalari: sig -> [[lng, lat], ...] — OSM'dagi BARCHA highway=traffic_signals (osmnx grafikni
+soddalashtirganda chorrahadan oldingi svetofor tugunlarini tashlab yuboradi, shuning uchun alohida).
 
 Ishlatish:
   # loyihadagi markaz grafigidan (yuklab olishsiz)
@@ -25,6 +27,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import time
 from collections import defaultdict
 from pathlib import Path
@@ -78,13 +81,28 @@ def tile_of(lng: float, lat: float) -> str:
     return f"{math.floor(lng / TILE_LNG)}_{math.floor(lat / TILE_LAT)}"
 
 
-def build(G, source: str) -> None:
+def signals_from_xml(path: Path) -> list[tuple[float, float]]:
+    """OSM fayldagi barcha highway=traffic_signals tugunlari"""
+    text = path.read_text(encoding="utf-8")
+    pts = []
+    for m in re.finditer(r'<node id="\d+" lat="([\d.]+)" lon="([\d.]+)"[^>]*?>(.*?)</node>', text, re.S):
+        if 'k="highway" v="traffic_signals"' in m.group(3):
+            pts.append((round(float(m.group(2)), 6), round(float(m.group(1)), 6)))
+    return pts
+
+
+def build(G, source: str, extra_signals: list[tuple[float, float]] | None = None) -> None:
     roads_by_tile: dict[str, list] = defaultdict(list)
     nodes_by_tile: dict[str, set] = defaultdict(set)
     seen: set = set()
     signals = 0
     node_xy = {n: (round(d["x"], 6), round(d["y"], 6), 1 if d.get("highway") == "traffic_signals" else 0) for n, d in G.nodes(data=True)}
     signals = sum(v[2] for v in node_xy.values())
+    # barcha svetofor nuqtalari: grafik tugunlaridagilar + (XML’dan) grafikka kirmay qolganlari
+    sig_all = {(x, y) for x, y, f in node_xy.values() if f} | set(extra_signals or [])
+    sig_by_tile: dict[str, list[list[float]]] = defaultdict(list)
+    for x, y in sig_all:
+        sig_by_tile[tile_of(x, y)].append([x, y])
 
     for u, v, d in G.edges(data=True):
         oneway = bool(d.get("oneway"))
@@ -125,8 +143,37 @@ def build(G, source: str) -> None:
     total_roads = 0
     for t, roads in roads_by_tile.items():
         nodes = {n: list(node_xy[int(n)]) for n in nodes_by_tile[t]}
-        (tiles_dir / f"{t}.json").write_text(json.dumps({"roads": roads, "nodes": nodes}, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        data = {"roads": roads, "nodes": nodes, "sig": sig_by_tile.get(t, [])}
+        (tiles_dir / f"{t}.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
         total_roads += len(roads)
+
+    # svetoforli chorrahalar (uzoqdan ko'rinish uchun): 40 m ichidagi svetofor tugunlari bitta nuqta
+    sig_pts = sorted(sig_all)
+    cos = math.cos(math.radians(41.31))
+    parent = list(range(len(sig_pts)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    grid: dict[tuple[int, int], list[int]] = defaultdict(list)
+    cell = 0.0005  # ~50 m
+    for i, (x, y) in enumerate(sig_pts):
+        grid[(int(x / cell), int(y / cell))].append(i)
+    for i, (x, y) in enumerate(sig_pts):
+        gx, gy = int(x / cell), int(y / cell)
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                for j in grid.get((gx + dx, gy + dy), []):
+                    if j > i and math.hypot((sig_pts[j][0] - x) * 111320 * cos, (sig_pts[j][1] - y) * 110540) < 40:
+                        parent[find(i)] = find(j)
+    groups: dict[int, list[int]] = defaultdict(list)
+    for i in range(len(sig_pts)):
+        groups[find(i)].append(i)
+    junctions = [[round(sum(sig_pts[i][0] for i in g) / len(g), 6), round(sum(sig_pts[i][1] for i in g) / len(g), 6), len(g)] for g in groups.values()]
+    (OUT / "signals.json").write_text(json.dumps(junctions, separators=(",", ":")), encoding="utf-8")
 
     xs = [x for x, _, _ in node_xy.values()]
     ys = [y for _, y, _ in node_xy.values()]
@@ -138,11 +185,12 @@ def build(G, source: str) -> None:
         "center": [round((min(xs) + max(xs)) / 2, 6), round((min(ys) + max(ys)) / 2, 6)],
         "tiles": sorted(roads_by_tile),
         "roads": total_roads,
-        "signals": signals,
+        "signals": len(sig_all),
+        "junctions": len(junctions),  # svetoforli chorrahalar (signals.json)
     }
     (OUT / "index.json").write_text(json.dumps(index, ensure_ascii=False, indent=1), encoding="utf-8")
     size = sum(f.stat().st_size for f in tiles_dir.glob("*.json"))
-    print(f"✅ {total_roads} ko'cha, {len(roads_by_tile)} katak, {signals} svetofor tuguni, {size / 1e6:.1f} MB -> {OUT}")
+    print(f"✅ {total_roads} ko'cha, {len(roads_by_tile)} katak, {len(sig_all)} svetofor ({len(junctions)} chorraha), {size / 1e6:.1f} MB -> {OUT}")
 
 
 def main() -> None:
@@ -160,7 +208,7 @@ def main() -> None:
     elif a.xml:
         print(f"⏳ {a.xml} o'qilmoqda …")
         G = ox.graph_from_xml(ROOT / a.xml, simplify=True, retain_all=False)
-        build(G, f"osm-xml:{Path(a.xml).name}")
+        build(G, f"osm-xml:{Path(a.xml).name}", signals_from_xml(ROOT / a.xml))
     else:
         if a.ipv6:
             # Overpass'ning ba'zi IPv4 manzillari ayrim tarmoqlardan javob bermaydi — IPv6 orqali ulanamiz

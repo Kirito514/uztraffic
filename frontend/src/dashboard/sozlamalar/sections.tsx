@@ -112,6 +112,9 @@ export function MapToggles({ s }: { s: SettingsModel }) {
       <Row title="Mashinalar" desc="Bo‘laklar bo‘ylab yuradigan simulyatsiya — 15-zoomdan yaqinda">
         <Toggle label="Mashinalar" checked={s.map.cars} onChange={(v) => s.setMap({ cars: v })} />
       </Row>
+      <Row title="Tirbandlik" desc="Yo‘llar yashil, sariq yoki qizil. Uzoqda — namunaviy, 15-zoomdan yaqinda — simulyatsiyadagi mashinalar tezligi va soniga qarab">
+        <Toggle label="Tirbandlik" checked={s.map.traffic} onChange={(v) => s.setMap({ traffic: v })} />
+      </Row>
     </>
   )
 }
