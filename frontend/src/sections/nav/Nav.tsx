@@ -2,12 +2,21 @@ import { useState } from 'react'
 import { motion, type Transition } from 'motion/react'
 import { CtaPill, HoverLinks, MenuButton, MenuSheet, useNavScroll } from './shared'
 import { Logo } from './Logo'
+import { springSoft } from '@/lib/motion'
 import { cn } from '@/lib/utils'
 
 /* Orol morfi: Dynamic Island kabi ozgina “tirik” (bounce 0.14) — kapsula joyiga tushib, nafas oladi.
    Shaffoflik esa tezroq va bouncesiz: shakl hali yig‘ilayotganda sirt allaqachon paydo bo‘ladi. */
 const morph: Transition = { type: 'spring', bounce: 0.14, duration: 0.65 }
 const surfaceFade: Transition = { type: 'spring', bounce: 0, duration: 0.35 }
+
+/* Sahifa ochilganda: logotip, havolalar va tugma tepadan xiralikdan birin-ketin tushadi —
+   hero fotosi ochilayotgan paytda. `layout` o‘z morfini saqlaydi, kirish esa `default`da. */
+const enter = (i: number) => ({
+  initial: { opacity: 0, y: -12, filter: 'blur(6px)' },
+  animate: { opacity: 1, y: 0, filter: 'blur(0px)' },
+  transition: { layout: morph, default: { ...springSoft, delay: 0.2 + i * 0.08 } },
+})
 
 /* Navbar — Orol: tepada to‘liq kenglikdagi shaffof panel; scroll’dan keyin markazdagi ixcham
    shisha kapsulaga “yig‘iladi”. Faqat transform/opacity animatsiya qilinadi: kenglik — Motion layout,
@@ -47,15 +56,15 @@ export function Nav() {
             )}
           />
 
-          <motion.a layout="position" transition={morph} href="#" aria-label="OQIM bosh sahifa" className="flex h-10 items-center">
+          <motion.a layout="position" {...enter(0)} href="#" aria-label="OQIM bosh sahifa" className="flex h-10 items-center">
             <Logo compact={compact} />
           </motion.a>
 
-          <motion.div layout="position" transition={morph} className="hidden md:block">
+          <motion.div layout="position" {...enter(1)} className="hidden md:block">
             <HoverLinks id="nav-island" tone={dark ? 'dark' : 'light'} className="text-[13px]" />
           </motion.div>
 
-          <motion.div layout="position" transition={morph} className="flex items-center gap-1">
+          <motion.div layout="position" {...enter(2)} className="flex items-center gap-1">
             <CtaPill tone={dark ? 'ink' : 'dark'} className="hidden sm:inline-flex" />
             <MenuButton open={open} onClick={() => setOpen((v) => !v)} className="md:hidden" />
           </motion.div>

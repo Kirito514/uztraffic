@@ -18,6 +18,12 @@ export function lockScroll(locked: boolean) {
   document.documentElement.style.overflow = locked ? 'hidden' : ''
 }
 
+/* Scrollbar’dan: sudrashda darhol (1:1), trekka bosilganda — silliq */
+export function scrollToY(y: number, immediate = false) {
+  if (instance) instance.scrollTo(y, { immediate, duration: 0.9 })
+  else window.scrollTo({ top: y, behavior: immediate ? 'instant' : 'smooth' })
+}
+
 export function initSmoothScroll() {
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return () => {}
 
