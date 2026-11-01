@@ -4,7 +4,7 @@
 export type LngLat = [number, number]
 export type Road = { n: [string, string]; p: LngLat[]; l: [number, number]; h: string; s: number; nm?: string }
 export type Tile = { roads: Road[]; nodes: Record<string, [number, number, number]> }
-export type CityIndex = { tile: { lng: number; lat: number }; bounds: [LngLat, LngLat]; center: LngLat; tiles: string[]; roads: number; signals: number }
+export type CityIndex = { source: string; built: string; tile: { lng: number; lat: number }; bounds: [LngLat, LngLat]; center: LngLat; tiles: string[]; roads: number; signals: number }
 
 export const LANE_M = 3.3 // bitta bo‘lak kengligi, metr
 const BASE = '/city'

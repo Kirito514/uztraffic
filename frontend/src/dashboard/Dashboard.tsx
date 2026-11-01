@@ -31,7 +31,7 @@ export function Dashboard() {
   const [chrome, setChrome] = useState<Chrome>(CARD)
   const [actions, setActions] = useState<HTMLElement | null>(null)
   const glassSidebar = chrome.full && chrome.sidebar === 'glass'
-  const { tone } = useTheme()
+  const { tone, motion: motionPref } = useTheme()
   const dark = chrome.full ? chrome.glass === 'dark' : tone === 'dark'
 
   useEffect(() => {
@@ -66,7 +66,7 @@ export function Dashboard() {
   }, [toggleSidebar])
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion={motionPref === 'reduce' ? 'always' : 'user'}>
       <ChromeContext.Provider value={{ chrome, setChrome, actions }}>
         {/* full: fon (xarita) sahifaning o‘zida, qobiq ustidan o‘tkazuvchan — faqat boshqaruvlar bosiladi */}
         <div className={cn('relative z-10 flex min-h-svh gap-5 p-3 pr-3 md:pr-5', chrome.full ? 'pointer-events-none h-svh' : dark ? 'bg-[#121110] text-krem' : 'bg-mist')}>

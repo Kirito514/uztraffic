@@ -38,9 +38,10 @@ export function MapSettingsMenu({
     }
   }, [open])
 
-  const toggles: { key: 'labels' | 'lanes'; label: string; hint?: string }[] = [
+  const toggles: { key: 'labels' | 'lanes' | 'cars'; label: string; hint?: string }[] = [
     { key: 'labels', label: 'Ko‘cha nomlari' },
     { key: 'lanes', label: 'Yo‘l bo‘laklari', hint: 'Yaqinlashtirganda asfalt va chiziqlar' },
+    { key: 'cars', label: 'Mashinalar', hint: 'Simulyatsiya, 15-zoomdan yaqinda' },
   ]
 
   return (

@@ -102,13 +102,15 @@ type Props = {
   mapStyle: ResolvedStyle
   labels: boolean
   lanes: boolean
+  cars: boolean
+  density: number // bir bo‘lak-km’dagi mashinalar
   selected: string | null
   onSelect: (id: string | null) => void
   padding?: Partial<PaddingOptions> // suzuvchi panellar ostida qolmasin: tanlangan chorraha shu bo‘shliqdan tashqarida markazlanadi
   className?: string
 }
 
-export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, className }: Props) {
+export function LiveMap({ mapStyle, labels, lanes, cars, density, selected, onSelect, padding, className }: Props) {
   const el = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const pad = useRef<PaddingOptions>({ top: 0, right: 0, bottom: 0, left: 0 })
@@ -118,8 +120,8 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
   const ready = useRef(false)
   const syncing = useRef(0)
   const sim = useRef<{ worker: Worker; cars: ReturnType<typeof createCarLayer> } | null>(null)
-  const pending = useRef({ selected, labels, lanes })
-  pending.current = { selected, labels, lanes }
+  const pending = useRef({ selected, labels, lanes, cars, density })
+  pending.current = { selected, labels, lanes, cars, density }
   const palette = STYLES[mapStyle]
 
   useEffect(() => {
@@ -180,6 +182,14 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
     if (map.current && ready.current) applyVisibility(map.current, labels, lanes)
   }, [labels, lanes])
 
+  // mashinalar sozlamasi (Sozlamalar sahifasi yoki xarita menyusi) — xarita qayta yaratilmaydi
+  useEffect(() => {
+    send({ type: 'density', perLaneKm: density })
+  }, [density])
+  useEffect(() => {
+    if (map.current && ready.current) runCars(map.current)
+  }, [cars])
+
   useEffect(() => {
     if (map.current && ready.current) focus(map.current, selected, true)
   }, [selected])
@@ -235,6 +245,7 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
     const cars = createCarLayer(import.meta.env.DEV ? (st) => ((window as unknown as { __sim: unknown }).__sim = st) : undefined)
     worker.onmessage = (e: MessageEvent<FromWorker>) => cars.push(e.data)
     sim.current = { worker, cars }
+    send({ type: 'density', perLaneKm: pending.current.density })
     const beforeId = m.getStyle().layers.find((l) => l.type === 'symbol')?.id
     m.addLayer(cars.layer, beforeId)
     runCars(m)
@@ -244,9 +255,9 @@ export function LiveMap({ mapStyle, labels, lanes, selected, onSelect, padding, 
 
   /* yaqinda va tab ko‘rinib turganda yuradi; aks holda oqim to‘xtaydi (CPU sarflanmaydi) */
   function runCars(m: MLMap) {
-    const on = m.getZoom() >= CARS_FROM && document.visibilityState === 'visible'
-    send({ type: 'run', running: on })
-    sim.current?.cars.setVisible(m.getZoom() >= CARS_FROM)
+    const near = m.getZoom() >= CARS_FROM && pending.current.cars
+    send({ type: 'run', running: near && document.visibilityState === 'visible' })
+    sim.current?.cars.setVisible(near)
   }
 
   function addSpots(m: MLMap, dark: boolean) {

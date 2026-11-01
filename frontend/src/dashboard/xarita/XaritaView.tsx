@@ -108,6 +108,8 @@ export function XaritaView({ selected, onSelect, settings, onSettings, layout, t
         mapStyle={mapStyle}
         labels={settings.labels}
         lanes={settings.lanes}
+        cars={settings.cars}
+        density={settings.density}
         selected={selected}
         onSelect={select}
         padding={{ top: margin[0], right: margin[1], bottom: margin[2], left: margin[3] }}
