@@ -22,7 +22,7 @@ function body(id: SectionId, s: SettingsModel): ReactNode {
     case 'xarita':
       return (
         <>
-          <Row stack title="Uslub" desc="“Mavzu” — och mavzuda OQIM, to‘q mavzuda tungi xarita">
+          <Row stack title="Uslub" desc="“Mavzu” — och mavzuda Qum, to‘q mavzuda Grafit xarita">
             <MapStyleChoices s={s} />
           </Row>
           <MapToggles s={s} />

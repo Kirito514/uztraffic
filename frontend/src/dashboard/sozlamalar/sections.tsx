@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { useTone } from '../chorrahalar/shared'
 import { useTheme, type ThemePref } from '../theme'
 import { useMapSettings } from '../xarita/useMapSettings'
-import { DENSITY, type MapStyle } from '../xarita/mapSettings'
+import { DENSITY, STYLE_OPTIONS } from '../xarita/mapSettings'
 import { loadIndex, type CityIndex } from '../xarita/roads'
 import { Choice, Kbd, Row, Segmented, Slider, ThemePreview, Toggle } from './controls'
 
@@ -33,8 +33,8 @@ export const SECTIONS = [
 export type SectionId = (typeof SECTIONS)[number]['id']
 
 const THEMES: { id: ThemePref; label: string; hint: string }[] = [
-  { id: 'light', label: 'Och shisha', hint: 'Krem xarita, oq shisha' },
-  { id: 'dark', label: 'To‘q shisha', hint: 'Tungi xarita, qora shisha' },
+  { id: 'light', label: 'Och shisha', hint: 'Qum xarita, oq shisha' },
+  { id: 'dark', label: 'To‘q shisha', hint: 'Grafit xarita, qora shisha' },
   { id: 'system', label: 'Tizimga mos', hint: 'Kompyuter sozlamasi' },
 ]
 
@@ -81,17 +81,10 @@ export function MotionRow({ s }: { s: SettingsModel }) {
   )
 }
 
-const STYLES: { id: MapStyle; label: string; swatch: string }[] = [
-  { id: 'auto', label: 'Mavzu', swatch: 'linear-gradient(135deg,#efe9e1 50%,#141312 50%)' },
-  { id: 'oqim', label: 'OQIM', swatch: 'linear-gradient(135deg,#efe9e1 50%,#f2a07b 50%)' },
-  { id: 'kunduzgi', label: 'Kunduzgi', swatch: 'linear-gradient(135deg,#f2f3f0 50%,#d5d5d5 50%)' },
-  { id: 'tungi', label: 'Tungi', swatch: 'linear-gradient(135deg,#141312 50%,#3d3935 50%)' },
-]
-
 export function MapStyleChoices({ s, layoutId = 'map-style-dot' }: { s: SettingsModel; layoutId?: string }) {
   return (
-    <div role="radiogroup" aria-label="Xarita uslubi" className="grid grid-cols-4 gap-2">
-      {STYLES.map((o) => (
+    <div role="radiogroup" aria-label="Xarita uslubi" className="grid grid-cols-3 gap-2">
+      {STYLE_OPTIONS.map((o) => (
         <Choice key={o.id} on={s.map.style === o.id} onClick={() => s.setMap({ style: o.id })} label={o.label} layoutId={layoutId}>
           <span className="absolute inset-0" style={{ background: o.swatch }} />
         </Choice>

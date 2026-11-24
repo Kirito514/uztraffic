@@ -10,73 +10,22 @@ import type { ResolvedStyle } from './mapSettings'
 import { createCarLayer } from './sim/carLayer'
 import { mercX, mercY, ORIGIN_X, ORIGIN_Y, unmercLat, unmercLng, type CarInfo, type FromWorker, type ToWorker } from './sim/protocol'
 import { CarCard, CarPeek } from './CarCard'
+import { GRAFIT, QUM } from './mapTheme/styles'
+import { toPalette, type Palette } from './mapTheme/tokens'
 
 /* Jonli xarita (MapLibre + OpenFreeMap, kalitsiz). Ustida o‘zimizning qatlamlar:
    yaqinlashtirganda ko‘chalar haqiqiy kenglikdagi asfalt va bo‘lak chiziqlari bilan chiziladi
    (OSM `lanes`), chorrahalar — GPU’dagi circle qatlami. Doimiy animatsiya sikli yo‘q. */
 
-// building3d — 3D rejimda ko‘tarilgan binolar rangi
-type Palette = { url: string; dark: boolean; paint: Record<string, Record<string, unknown>>; asphalt: string; mark: string; markOpacity: number; building3d: string }
 
-const STYLES: Record<ResolvedStyle, Palette> = {
-  oqim: {
-    url: 'https://tiles.openfreemap.org/styles/positron',
-    dark: false,
-    asphalt: '#6f6a64',
-    building3d: '#ebe5dc',
-    mark: '#fbf8f4',
-    markOpacity: 0.9,
-    paint: {
-      background: { 'background-color': '#efe9e1' },
-      park: { 'fill-color': '#dfe5d3' },
-      landcover_wood: { 'fill-color': '#dce3d0' },
-      water: { 'fill-color': '#c4d7df' },
-      waterway: { 'line-color': '#c4d7df' },
-      landuse_residential: { 'fill-color': '#ebe4db' },
-      building: { 'fill-color': '#e4ddd3', 'fill-outline-color': '#d9d0c5' },
-      highway_minor: { 'line-color': '#fbf8f4' },
-      highway_path: { 'line-color': '#f6f1ea' },
-      highway_major_casing: { 'line-color': '#dcd2c6' },
-      highway_major_inner: { 'line-color': '#ffffff' },
-      highway_major_subtle: { 'line-color': '#e3dacf' },
-      highway_motorway_casing: { 'line-color': '#d6cabb' },
-      highway_motorway_subtle: { 'line-color': '#e3dacf' },
-      'highway-name-minor': { 'text-color': '#8f877e', 'text-halo-color': '#f4efe9' },
-      'highway-name-major': { 'text-color': '#736d66', 'text-halo-color': '#f4efe9' },
-    },
-  },
-  kunduzgi: { url: 'https://tiles.openfreemap.org/styles/positron', dark: false, asphalt: '#7d7d7b', mark: '#ffffff', markOpacity: 0.9, building3d: '#e9e8e5', paint: {} },
-  tungi: {
-    url: 'https://tiles.openfreemap.org/styles/dark',
-    dark: true,
-    asphalt: '#3d3935', // binolardan (#1c1a19) aniq ajralib tursin
-    building3d: '#2b2826',
-    mark: '#e6dfd6',
-    markOpacity: 0.7,
-    paint: {
-      background: { 'background-color': '#141312' },
-      water: { 'fill-color': '#1b2f40' },
-      waterway: { 'line-color': '#1b2f40' },
-      landcover_wood: { 'fill-color': '#18241b' },
-      landuse_park: { 'fill-color': '#1a271d' },
-      landuse_residential: { 'fill-color': '#171615' },
-      building: { 'fill-color': '#1c1a19' },
-      highway_minor: { 'line-color': '#262320' },
-      highway_path: { 'line-color': '#1f1d1b' },
-      highway_major_casing: { 'line-color': '#3a352f' },
-      highway_major_inner: { 'line-color': '#2e2a26' },
-      highway_major_subtle: { 'line-color': '#2e2a26' },
-      highway_motorway_casing: { 'line-color': '#433d36' },
-      highway_motorway_subtle: { 'line-color': '#2e2a26' },
-    },
-  },
-}
+const STYLES: Record<ResolvedStyle, Palette> = { qum: toPalette(QUM), grafit: toPalette(GRAFIT) }
 
 async function loadStyle(p: Palette): Promise<StyleSpecification> {
   const style = (await fetch(p.url).then((r) => r.json())) as StyleSpecification
   style.layers = style.layers
     // ko‘cha nomlari qoladi, qolgan yozuvlar (davlat, shahar, belgilar) — shovqin
     .filter((l) => l.type !== 'symbol' || l.id.startsWith('highway-name'))
+    .filter((l) => !p.hide?.includes(l.id))
     .map((l) => (p.paint[l.id] ? ({ ...l, paint: { ...(l as { paint?: object }).paint, ...p.paint[l.id] } } as typeof l) : l))
   return style
 }
@@ -130,6 +79,7 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
   const syncing = useRef(0)
   const sim = useRef<{ worker: Worker; cars: ReturnType<typeof createCarLayer> } | null>(null)
   const lastKeys = useRef('')
+  const camera = useRef<{ center: maplibregl.LngLat; zoom: number; bearing: number; pitch: number } | null>(null)
   // tanlangan mashina: tafsilot simulyatsiyadan har kadrda keladi, kartochka mashina bilan birga suriladi
   const [carSlot, setCarSlot] = useState(-1)
   const [carInfo, setCarInfo] = useState<CarInfo | null>(null)
@@ -146,14 +96,15 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
     let alive = true
     let m: MLMap | null = null
     loadStyle(palette)
-      .catch(() => ({ version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': palette.dark ? '#141312' : '#efe9e1' } }] }) as StyleSpecification)
+      .catch(() => ({ version: 8, sources: {}, layers: [{ id: 'bg', type: 'background', paint: { 'background-color': (palette.paint.background?.['background-color'] as string) ?? (palette.dark ? '#141312' : '#efe9e1') } }] }) as StyleSpecification)
       .then((style) => {
+        lastKeys.current = '' // yangi xarita (uslub almashdi) — asfalt va simulyatsiya kataklari qaytadan yuboriladi
         if (!alive || !el.current) return
         m = new maplibregl.Map({
           container: el.current,
           style,
-          bounds: BOUNDS,
-          fitBoundsOptions: { padding: homePad(pad.current) },
+          // uslub almashib xarita qayta yaratilsa — kamera o‘sha joyda qoladi; birinchi ochilishda barcha chorrahalar sig‘adi
+          ...(camera.current ?? { bounds: BOUNDS, fitBoundsOptions: { padding: homePad(pad.current) } }),
           attributionControl: false,
           // o‘ng tugma (yoki Ctrl + sudrash) bilan burish va qiyshaytirish — 3D ko‘rinish uchun
           maxPitch: 70,
@@ -195,6 +146,7 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
       document.removeEventListener('visibilitychange', onVisibility)
       sim.current?.worker.terminate()
       sim.current = null
+      if (m) camera.current = { center: m.getCenter(), zoom: m.getZoom(), bearing: m.getBearing(), pitch: m.getPitch() }
       m?.remove()
       map.current = null
     }
@@ -278,7 +230,8 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
           'line-color': ['match', ['get', 'lv'], 0, TRAFFIC[0], 1, TRAFFIC[1], 2, TRAFFIC[2], TRAFFIC[3]],
           'line-width': metres('w'),
           'line-offset': metres('o'),
-          'line-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.4, 0.9, 16.2, 0.9, 17.2, p.dark ? 0.24 : 0.18],
+          // yaqinda erkin yo‘llar deyarli bo‘yalmaydi — asfalt o‘z rangida qoladi, faqat sekin va tirband joylar tusda
+          'line-opacity': ['interpolate', ['linear'], ['zoom'], 15, 0, 15.4, 0.9, 16.2, 0.9, 17.2, ['match', ['get', 'lv'], 0, 0.05, p.dark ? 0.26 : 0.2]],
         },
       },
       beforeId,

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DEFAULT_SETTINGS, type MapSettings } from './mapSettings'
+import { DEFAULT_SETTINGS, STYLE_OPTIONS, type MapSettings } from './mapSettings'
 
 const KEY = 'oqim.mapSettings.v3' // v3: MapLibre — bo‘laklar sozlamasi qo‘shildi
 
@@ -7,7 +7,9 @@ const KEY = 'oqim.mapSettings.v3' // v3: MapLibre — bo‘laklar sozlamasi qo�
 export function useMapSettings() {
   const [s, setS] = useState<MapSettings>(() => {
     try {
-      return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }
+      const saved: MapSettings = { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') }
+      // eski uslublar (OQIM, Kunduzgi, Tungi) olib tashlangan — ular “Mavzu”ga o‘tadi
+      return STYLE_OPTIONS.some((o) => o.id === saved.style) ? saved : { ...saved, style: 'auto' }
     } catch {
       return DEFAULT_SETTINGS
     }

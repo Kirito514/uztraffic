@@ -66,6 +66,7 @@ export function XaritaView({ selected, onSelect, settings, onSettings, layout, t
   const spot = SPOTS.find((s) => s.id === selected)
   const mapStyle = resolveStyle(settings.style, tone)
 
+
   // xaritada chorraha bosilsa, yig‘ilgan panel tafsilot bilan ochiladi
   const select = useCallback(
     (id: string | null) => {
@@ -102,7 +103,7 @@ export function XaritaView({ selected, onSelect, settings, onSettings, layout, t
   }, [open, full, box])
 
   const map = (
-    <Suspense fallback={<div className={cn('absolute inset-0', mapStyle === 'tungi' ? 'bg-[#141312]' : 'bg-[#efe9e1]')} />}>
+    <Suspense fallback={<div className={cn('absolute inset-0', mapStyle === 'grafit' ? 'bg-[#17181a]' : 'bg-[#ebe3d5]')} />}>
       <LiveMap
         key={full ? 'full' : 'card'}
         mapStyle={mapStyle}

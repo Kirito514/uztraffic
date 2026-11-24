@@ -3,14 +3,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Icon } from '@iconify/react'
 import { spring } from '@/lib/motion'
 import { cn } from '@/lib/utils'
-import type { MapSettings, MapStyle } from './mapSettings'
-
-const STYLES: { id: MapStyle; label: string; swatch: string }[] = [
-  { id: 'auto', label: 'Mavzu', swatch: 'linear-gradient(135deg,#efe9e1 50%,#141312 50%)' },
-  { id: 'oqim', label: 'OQIM', swatch: 'linear-gradient(135deg,#efe9e1 50%,#f2a07b 50%)' },
-  { id: 'kunduzgi', label: 'Kunduzgi', swatch: 'linear-gradient(135deg,#f5f5f3 50%,#ffd666 50%)' },
-  { id: 'tungi', label: 'Tungi', swatch: 'linear-gradient(135deg,#141312 50%,#2e2a26 50%)' },
-]
+import { STYLE_OPTIONS, type MapSettings } from './mapSettings'
 
 /* Xarita qatlamlari tugmasi + popover (Apple Maps’dagi “Map” menyusi kabi) */
 export function MapSettingsMenu({
@@ -73,8 +66,8 @@ export function MapSettingsMenu({
             )}
           >
             <p className={cn('px-1 pb-2 text-[11.5px] font-medium uppercase tracking-[0.06em]', dark ? 'text-krem/55' : 'text-ash')}>Uslub</p>
-            <div className="grid grid-cols-4 gap-1.5">
-              {STYLES.map((s) => (
+            <div className="grid grid-cols-3 gap-1.5">
+              {STYLE_OPTIONS.map((s) => (
                 <button
                   key={s.id}
                   onClick={() => onChange({ style: s.id })}
