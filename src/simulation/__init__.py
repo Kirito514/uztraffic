@@ -2,6 +2,6 @@
 Simulation moduli
 """
 
-from .city_simulator import CitySimulator, SimulationConfig
+from .city_simulator import CitySimulator
 
-__all__ = ['CitySimulator', 'SimulationConfig']
+__all__ = ['CitySimulator']

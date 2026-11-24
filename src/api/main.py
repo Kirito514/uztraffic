@@ -1,40 +1,71 @@
 """
-FastAPI Server - Traffic Management API (OSM Version)
+FastAPI Server — OQIM trafik dashboard API (docs/dashboard-api.md kontrakti)
+
+Simulyatsiya har 1 s da bir qadam yuradi; natija (Snapshot) WebSocket
+orqali barcha mijozlarga yuboriladi va /api/state da qaytariladi.
 """
 
 import asyncio
-import random
-from datetime import datetime
-from typing import Optional
+import json
+import time
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
+from typing import Literal, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
-import sys
-import os
-
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from services.traffic_analyzer import TrafficAnalyzer
-from ai.congestion_predictor import CongestionPredictor
-from services.evp_controller import EVPController
-from simulation.city_simulator import CitySimulator
-from ai.nlp_bot import NLPBot
-from ai.recommender import RouteRecommender
-
-app = FastAPI(
-    title="Aqlli Shahar Trafik API (OSM)",
-    description="GPS kuzatuv va aqlli svetofor boshqaruv tizimi",
-    version="2.0.0",
-)
+from src.simulation.city_simulator import TICK_S, CitySimulator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 WEB_DIR = PROJECT_ROOT / "web"
 FRONT_DIST = PROJECT_ROOT / "frontend" / "dist"   # React landing (npm run build)
+
+simulator: Optional[CitySimulator] = None
+connections: set[WebSocket] = set()
+
+
+async def simulation_loop():
+    """Har TICK_S soniyada: qadam → barcha WebSocket mijozlarga Snapshot."""
+    next_tick = time.monotonic()
+    while True:
+        try:
+            message = json.dumps(simulator.step(TICK_S), ensure_ascii=False)
+            for ws in list(connections):
+                try:
+                    await ws.send_text(message)
+                except Exception:
+                    connections.discard(ws)
+        except Exception as exc:          # bitta qadam xatosi serverni to'xtatmasin
+            print(f"⚠️  Simulyatsiya qadamida xato: {exc!r}")
+        next_tick += TICK_S
+        await asyncio.sleep(max(0.0, next_tick - time.monotonic()))
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    global simulator
+    print("🚀 Simulyatsiya tayyorlanmoqda (Toshkent markazi)...")
+    simulator = CitySimulator()
+    print(f"✅ {len(simulator.intersections)} chorraha, {len(simulator.vehicles)} mashina")
+    task = asyncio.create_task(simulation_loop())
+    yield
+    task.cancel()
+    with suppress(asyncio.CancelledError):
+        await task
+    print("🛑 Server to'xtatildi")
+
+
+app = FastAPI(
+    title="OQIM — Aqlli svetofor API",
+    description="Toshkent markazi simulyatsiyasi: DQN svetoforlar, tez yordam, tirbandlik zonalari",
+    version="3.0.0",
+    lifespan=lifespan,
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -43,6 +74,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=2048)
 
 if (WEB_DIR / "css").exists():
     app.mount("/css", StaticFiles(directory=str(WEB_DIR / "css")), name="css")
@@ -50,66 +82,36 @@ if (WEB_DIR / "js").exists():
     app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
 if (WEB_DIR / "assets").exists():
     app.mount("/assets", StaticFiles(directory=str(WEB_DIR / "assets")), name="assets")
-for _sub in ("_app", "photos", "brand"):
+for _sub in ("_app", "photos", "brand", "dashboard"):   # /dashboard/... — React panel ma'lumotlari
     if (FRONT_DIST / _sub).exists():
         app.mount(f"/{_sub}", StaticFiles(directory=str(FRONT_DIST / _sub)), name=f"front-{_sub}")
 
-traffic_analyzer: Optional[TrafficAnalyzer] = None
-congestion_predictor: Optional[CongestionPredictor] = None
-evp_controller: Optional[EVPController] = None
-city_simulator: Optional[CitySimulator] = None
-nlp_bot: Optional[NLPBot] = None
-recommender: Optional[RouteRecommender] = None
 
-active_connections: list[WebSocket] = []
-
+# ──────────────────────────────────────────
+# So'rov modellari
+# ──────────────────────────────────────────
 class VehiclePosition(BaseModel):
     vehicle_id: str
     latitude: float
     longitude: float
-    speed: float
+    speed: float          # km/soat
     heading: float = 0.0
 
-class EmergencyActivation(BaseModel):
-    vehicle_id: str
-    destination_lat: float
-    destination_lng: float
 
-class ChatMessage(BaseModel):
-    message: str
-    user_id: str = "driver_1"
+class ModeRequest(BaseModel):
+    mode: Literal["ai", "fixed"]
 
-@app.on_event("startup")
-async def startup_event():
-    global traffic_analyzer, congestion_predictor
-    global evp_controller, city_simulator
-    global nlp_bot, recommender
 
-    print("🚀 Server ishga tushmoqda...")
+class EmergencyRequest(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
 
-    city_simulator = CitySimulator()
-    city_simulator.setup()
+    from_: Tuple[float, float] = Field(alias="from")   # [lat, lng]
+    to: Tuple[float, float]
 
-    traffic_analyzer = city_simulator.traffic_analyzer
-    congestion_predictor = city_simulator.congestion_predictor
-    evp_controller = city_simulator.evp_controller
-    
-    try:
-        nlp_bot = NLPBot(traffic_analyzer, evp_controller)
-    except:
-        pass
-    
-    try:
-        recommender = RouteRecommender(traffic_analyzer)
-    except:
-        pass
 
-    print("✅ Server tayyor")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    print("🛑 Server to'xtatildi")
-
+# ──────────────────────────────────────────
+# Sahifalar
+# ──────────────────────────────────────────
 @app.get("/")
 async def landing():
     landing_file = FRONT_DIST / "index.html"
@@ -119,118 +121,91 @@ async def landing():
         return FileResponse(str(landing_file))
     return {"error": "Landing topilmadi", "expected_path": str(landing_file)}
 
+
 @app.get("/dashboard")
-async def root():
-    index_file = WEB_DIR / "dashboard.html"
+@app.get("/dashboard.html")
+async def dashboard_page():
+    index_file = FRONT_DIST / "dashboard.html"          # React panel (npm run build)
+    if not index_file.exists():
+        index_file = WEB_DIR / "dashboard.html"
     if index_file.exists():
         return FileResponse(str(index_file))
     return {"error": "Dashboard topilmadi", "expected_path": str(index_file)}
 
+
 @app.get("/gps")
-async def get_gps_page():
+async def gps_page():
     gps_file = WEB_DIR / "gps.html"
     if gps_file.exists():
         return FileResponse(str(gps_file))
     return {"error": "GPS sahifasi topilmadi"}
 
-@app.get("/dashboard.html")
-async def get_dashboard():
-    return await root()
+
+# ──────────────────────────────────────────
+# Kontrakt: REST
+# ──────────────────────────────────────────
+@app.get("/api/state")
+async def get_state():
+    return simulator.snapshot
+
 
 @app.get("/api/roads")
 async def get_roads():
-    if city_simulator and city_simulator.roads_data:
-        return city_simulator.roads_data
-    return {"error": "Yo'l ma'lumotlari mavjud emas"}
+    return simulator.geojson
 
-@app.get("/api/vehicles")
-async def get_all_vehicles():
-    if not city_simulator:
-        return {"vehicles": [], "count": 0}
-        
-    dashboard_data = city_simulator.get_dashboard_data()
-    return {
-        "vehicles": dashboard_data.get("vehicles", []),
-        "count": len(dashboard_data.get("vehicles", [])),
-        "timestamp": datetime.now().isoformat(),
-    }
+
+@app.get("/api/intersections/{intersection_id}/history")
+async def get_history(intersection_id: str, minutes: float = Query(10, gt=0, le=15)):
+    if intersection_id not in simulator.by_id:
+        raise HTTPException(404, f"Chorraha topilmadi: {intersection_id}")
+    return {"points": simulator.history(intersection_id, minutes)}
+
+
+@app.post("/api/mode")
+async def set_mode(request: ModeRequest):
+    simulator.set_mode(request.mode)
+    return {"mode": simulator.mode}
+
+
+@app.post("/api/emergency/route")
+async def emergency_route(request: EmergencyRequest):
+    try:
+        return simulator.start_emergency(request.from_, request.to)
+    except ValueError as exc:
+        raise HTTPException(422, str(exc))
+
+
+@app.delete("/api/emergency")
+async def emergency_cancel():
+    simulator.cancel_emergency()
+    return {"ok": True}
+
 
 @app.post("/api/vehicles/update")
 async def update_vehicle_position(position: VehiclePosition):
-    if traffic_analyzer:
-        traffic_analyzer.update_vehicle(
-            position.vehicle_id,
-            position.latitude,
-            position.longitude,
-            position.speed,
-        )
+    simulator.update_gps(position.vehicle_id, position.latitude, position.longitude,
+                         position.speed, position.heading)
     return {"status": "updated", "vehicle_id": position.vehicle_id}
 
-@app.get("/api/traffic/overview")
-async def get_traffic_overview():
-    if not traffic_analyzer:
-        return {"error": "Tahlilchi ishga tushmagan"}
-    return traffic_analyzer.get_city_overview()
-
-@app.get("/api/traffic/hotspots")
-async def get_hotspots(threshold: float = 30.0):
-    if not traffic_analyzer:
-        return {"hotspots": []}
-    return {"hotspots": [h.to_dict() for h in traffic_analyzer.get_congestion_hotspots(threshold)]}
 
 @app.get("/api/traffic/clusters")
 async def get_clusters():
-    if not traffic_analyzer:
-        return {"clusters": []}
-    try:
-        return traffic_analyzer.get_clusters()
-    except:
-        return {"status": "error", "clusters": []}
+    """DBSCAN tirbandlik zonalari (Snapshot.zones bilan bir xil)."""
+    return {"clusters": simulator.zones}
 
-@app.post("/api/emergency/activate")
-async def activate_emergency(request: EmergencyActivation):
-    if city_simulator and city_simulator.vsim:
-        agents = list(city_simulator.vsim.agents.values())
-        if agents:
-            agent = random.choice(agents)
-            agent.is_emergency = True
-            agent.vehicle_type = "ambulance"
-    return {"status": "emergency_activated"}
 
-@app.post("/api/chat")
-async def chat_with_bot(request: ChatMessage):
-    if not nlp_bot:
-        return {"response": "Kechirasiz, AI yordamchi hozir o'chiq."}
-    reply = nlp_bot.process_message(request.message, request.user_id)
-    return {"response": reply}
-
+# ──────────────────────────────────────────
+# Kontrakt: WebSocket
+# ──────────────────────────────────────────
 @app.websocket("/ws/realtime")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    active_connections.append(websocket)
     try:
+        await websocket.send_json(simulator.snapshot)
+        connections.add(websocket)
         while True:
             await websocket.receive_text()
     except WebSocketDisconnect:
-        active_connections.remove(websocket)
-
-async def broadcast_state():
-    while True:
-        if city_simulator and city_simulator.is_running and active_connections:
-            data = city_simulator.get_dashboard_data()
-            disconnected = []
-            for connection in active_connections:
-                try:
-                    await connection.send_json(data)
-                except Exception:
-                    disconnected.append(connection)
-            for conn in disconnected:
-                if conn in active_connections:
-                    active_connections.remove(conn)
-        await asyncio.sleep(2.0)
-
-@app.on_event("startup")
-async def start_background_tasks():
-    if city_simulator:
-        asyncio.create_task(city_simulator.run(duration_seconds=36000))
-        asyncio.create_task(broadcast_state())
+        pass
+    finally:
+        connections.discard(websocket)

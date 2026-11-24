@@ -1,283 +1,213 @@
 """
-Vehicle Agent — Haqiqiy yo'lda yuruvchi mashina
+Vehicle Agent — Toshkent yo'l grafida harakatlanuvchi mashinalar
 
-Har bir mashina:
-  - OSM grafida Dijkstra orqali marshrut hisoblaydi
-  - Yo'l bo'ylab harakatlanadi (interpolatsiya)
-  - Svetafor qizil bo'lsa kutadi
-  - Manzilga yetganda yangi manzil oladi
+RoadNetwork  — roads.json dan yo'naltirilgan graf, segment geometriyasi,
+               eng qisqa yo'l va eng yaqin tugun qidirish.
+Vehicle      — marshrut (tugunlar ro'yxati), joriy segment va undagi masofa.
+move_vehicles — bir qadam: oldingi mashinaga masofa (car-following),
+               qizil chiroqda to'xtash chizig'ida turish, segmentdan segmentga o'tish.
 """
 
 import math
 import random
-from typing import Dict, List, Tuple, Optional
-from dataclasses import dataclass, field
-from datetime import datetime
+from dataclasses import dataclass
+from typing import Callable, Dict, List, Optional, Tuple
 
-try:
-    import networkx as nx
-    NX_AVAILABLE = True
-except ImportError:
-    NX_AVAILABLE = False
+import networkx as nx
+import numpy as np
+
+from src.simulation.osm_loader import bearing_deg, haversine_m
+
+MIN_GAP_M = 7.0            # to'xtagan mashinalar orasidagi masofa (mashina + bo'shliq)
+STOP_OFFSET_M = 3.0        # to'xtash chizig'i segment oxiridan
+ACCEL_MS2 = 2.5
+SPEED_RANGE_KMH = (20.0, 60.0)
+
+VEHICLE_TYPES = {          # tur: (ulush, tezlik koeffitsiyenti oralig'i)
+    "car": (0.80, (0.85, 1.05)),
+    "bus": (0.10, (0.70, 0.85)),
+    "truck": (0.10, (0.70, 0.85)),
+}
 
 
 @dataclass
-class VehicleAgent:
-    vehicle_id: str
-    vehicle_type: str   # car | bus | truck | ambulance
-    
-    # Hozirgi pozitsiya
-    lat: float = 0.0
-    lng: float = 0.0
-    speed_kmh: float = 0.0
-    heading: float = 0.0
-    is_emergency: bool = False
+class Edge:
+    u: str
+    v: str
+    length: float
+    speed: float               # m/s
+    coords: np.ndarray         # (k, 2) lat, lng
+    cum: np.ndarray            # har bir nuqtagacha masofa, segment uzunligiga moslangan
+    highway: str
+    name: str
 
-    # Marshrut
-    route_nodes: List[str] = field(default_factory=list)
-    route_index: int = 0          # Hozir qaysi segmentda
-    segment_progress: float = 0.0 # 0.0 → 1.0
+    def point_at(self, s: float) -> Tuple[float, float, float]:
+        """Segment boshidan s metrdagi (lat, lng, heading)."""
+        s = min(max(s, 0.0), self.length)
+        i = int(np.searchsorted(self.cum, s, side="right")) - 1
+        i = min(max(i, 0), len(self.coords) - 2)
+        seg = self.cum[i + 1] - self.cum[i]
+        f = (s - self.cum[i]) / seg if seg > 0 else 0.0
+        (lat1, lng1), (lat2, lng2) = self.coords[i], self.coords[i + 1]
+        return (lat1 + (lat2 - lat1) * f, lng1 + (lng2 - lng1) * f,
+                bearing_deg(lat1, lng1, lat2, lng2))
 
-    # Holat
-    waiting: bool = False         # Svetafor kutilmoqda
-    wait_seconds: float = 0.0
-    
-    # Statistika
-    total_distance_m: float = 0.0
-    trips_completed: int = 0
+    def end_bearing(self, back_m: float = 30.0) -> float:
+        """Segment oxiriga yaqinlashish yo'nalishi (oxirgi ~30 m)."""
+        lat1, lng1, _ = self.point_at(self.length - back_m)
+        lat2, lng2 = self.coords[-1]
+        if (lat1, lng1) == (lat2, lng2):
+            lat1, lng1 = self.coords[0]
+        return bearing_deg(lat1, lng1, lat2, lng2)
 
 
-class VehicleSimulator:
-    """
-    Barcha mashinalarni boshqaruvchi simulyator.
-    OSM grafdagi haqiqiy yo'llar bo'yicha yuradi.
-    """
+class RoadNetwork:
+    def __init__(self, roads: dict):
+        self.node_pos: Dict[str, Tuple[float, float]] = {k: tuple(v) for k, v in roads["nodes"].items()}
+        self.edges: Dict[Tuple[str, str], Edge] = {}
+        full = nx.DiGraph()
+        for e in roads["edges"]:
+            coords = np.array(e["coords"], dtype=float)
+            steps = [haversine_m(*coords[i], *coords[i + 1]) for i in range(len(coords) - 1)]
+            cum = np.concatenate([[0.0], np.cumsum(steps)])
+            length = max(float(e["length"]), 1.0)
+            cum = cum * (length / cum[-1]) if cum[-1] > 0 else np.linspace(0, length, len(coords))
+            speed_kmh = min(max(e["speed"], SPEED_RANGE_KMH[0]), SPEED_RANGE_KMH[1])
+            edge = Edge(e["from"], e["to"], length, speed_kmh / 3.6, coords, cum, e["highway"], e["name"])
+            self.edges[(edge.u, edge.v)] = edge
+            full.add_edge(edge.u, edge.v, length=length, time=length / edge.speed)
 
-    VEHICLE_SPEEDS = {
-        "car":       (30, 60),    # (min, max) km/h
-        "bus":       (20, 45),
-        "truck":     (15, 40),
-        "ambulance": (50, 90),
-    }
+        # Faqat eng katta kuchli bog'langan qism: har qanday tugundan har qanday tugunga yo'l bor
+        core = max(nx.strongly_connected_components(full), key=len)
+        self.graph = full.subgraph(core).copy()
+        self.nodes: List[str] = list(self.graph.nodes)
+        major = {"trunk", "primary", "secondary", "tertiary"}
+        weights = []
+        for n in self.nodes:
+            touches_major = any(self.edges[(n, m)].highway.replace("_link", "") in major
+                                for m in self.graph.successors(n))
+            weights.append(4.0 if touches_major else 1.0)
+        self._node_weights = weights
+        self._node_xy = np.array([self.node_pos[n] for n in self.nodes])
 
-    VEHICLE_WEIGHTS = {
-        "car": 0.65, "bus": 0.15, "truck": 0.15, "ambulance": 0.05
-    }
+    def random_node(self) -> str:
+        return random.choices(self.nodes, weights=self._node_weights)[0]
 
-    def __init__(self, roads_data: dict, vehicle_count: int = 100):
-        self.roads  = roads_data
-        self.graph  = self._build_graph()
-        self.agents: Dict[str, VehicleAgent] = {}
-        self.node_coords: Dict[str, Tuple[float, float]] = {
-            n["id"]: (n["lat"], n["lng"])
-            for n in roads_data.get("nodes", [])
-        }
-        self.node_ids = list(self.node_coords.keys())
-        
-        # Chorraha → svetafor holati  {"node_id": "green"|"red"}
-        self.signal_states: Dict[str, str] = {}
-        self._init_signals(roads_data.get("intersections", []))
-        
-        self._spawn_vehicles(vehicle_count)
-        print(f"✅  {vehicle_count} ta mashina yaratildi, {len(self.node_ids)} tugun mavjud")
+    def nearest_node(self, lat: float, lng: float) -> Tuple[str, float]:
+        """Eng yaqin tugun va unga masofa (m)."""
+        dlat = (self._node_xy[:, 0] - lat) * 111_320.0
+        dlng = (self._node_xy[:, 1] - lng) * 111_320.0 * math.cos(math.radians(lat))
+        i = int(np.argmin(dlat ** 2 + dlng ** 2))
+        node = self.nodes[i]
+        return node, haversine_m(lat, lng, *self.node_pos[node])
 
-    # ──────────────────────────────────────
-    # Graf qurish
-    # ──────────────────────────────────────
-    def _build_graph(self):
-        """OSM edges asosida NetworkX yo'naltirilgan graf"""
-        if not NX_AVAILABLE:
+    def shortest_path(self, a: str, b: str, weight: str = "time") -> Optional[List[str]]:
+        try:
+            return nx.shortest_path(self.graph, a, b, weight=weight)
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
             return None
 
-        G = nx.DiGraph()
-        for edge in self.roads.get("edges", []):
-            u, v = edge["from"], edge["to"]
-            speed = max(edge.get("speed", 50), 5)
-            length = edge.get("length_m", 100)
-            travel_time = length / (speed / 3.6)  # soniya
-            G.add_edge(u, v, weight=travel_time, length=length,
-                       speed=speed, lanes=edge.get("lanes", 1))
-            # Ikki tomonlama (OSM data odatda simplify qilgan)
-            G.add_edge(v, u, weight=travel_time, length=length,
-                       speed=speed, lanes=edge.get("lanes", 1))
-        return G
-
-    # ──────────────────────────────────────
-    # Svetaforlar
-    # ──────────────────────────────────────
-    def _init_signals(self, intersections: List[str]):
-        for node_id in intersections:
-            # Tasodifiy boshlang'ich holat
-            self.signal_states[node_id] = random.choice(["green", "green", "red"])
-
-    def update_signals(self, dt: float, ai_overrides: Dict[str, str] = None):
-        """
-        Svetaforlarni yangilash.
-        ai_overrides: AI tizimi buyurgan o'zgarishlar {node_id: "green"|"red"}
-        """
-        # Oddiy sikllik o'zgarish (har 30 soniyada)
-        # Haqiqiy proyektda Q-Learning natijasi ishlatiladi
-        for node_id in self.signal_states:
-            if ai_overrides and node_id in ai_overrides:
-                self.signal_states[node_id] = ai_overrides[node_id]
-            else:
-                # Har qadam uchun kichik ehtimollik bilan almashtirish
-                if random.random() < dt / 30.0:
-                    cur = self.signal_states[node_id]
-                    self.signal_states[node_id] = "red" if cur == "green" else "green"
-
-    # ──────────────────────────────────────
-    # Mashinalar yaratish
-    # ──────────────────────────────────────
-    def _spawn_vehicles(self, count: int):
-        if not self.node_ids:
-            return
-
-        types = list(self.VEHICLE_WEIGHTS.keys())
-        weights = list(self.VEHICLE_WEIGHTS.values())
-
-        for i in range(count):
-            vtype = random.choices(types, weights=weights)[0]
-            vid   = f"{vtype.upper()}-{i+1:03d}"
-            
-            start = random.choice(self.node_ids)
-            lat, lng = self.node_coords.get(start, (52.37, 4.90))
-
-            speed_range = self.VEHICLE_SPEEDS[vtype]
-            speed = random.uniform(*speed_range)
-
-            agent = VehicleAgent(
-                vehicle_id=vid,
-                vehicle_type=vtype,
-                lat=lat, lng=lng,
-                speed_kmh=speed,
-                is_emergency=(vtype == "ambulance"),
-            )
-            # Dastlabki marshrut
-            self._assign_route(agent, start)
-            self.agents[vid] = agent
-
-    # ──────────────────────────────────────
-    # Marshrut
-    # ──────────────────────────────────────
-    def _assign_route(self, agent: VehicleAgent, start_node: str):
-        if not NX_AVAILABLE or not self.graph or len(self.node_ids) < 2:
-            agent.route_nodes = [start_node]
-            return
-
-        # Tasodifiy manzil (boshqa chorraha)
+    def random_route(self, start: str) -> List[str]:
         for _ in range(10):
-            dest = random.choice(self.node_ids)
-            if dest != start_node:
-                try:
-                    path = nx.shortest_path(
-                        self.graph, start_node, dest, weight="weight"
-                    )
-                    if len(path) >= 2:
-                        agent.route_nodes    = path
-                        agent.route_index    = 0
-                        agent.segment_progress = 0.0
-                        return
-                except (nx.NetworkXNoPath, nx.NodeNotFound):
-                    continue
+            dest = self.random_node()
+            if dest != start:
+                path = self.shortest_path(start, dest)
+                if path and len(path) >= 3:
+                    return path
+        return [start, next(iter(self.graph.successors(start)))]
 
-        agent.route_nodes = [start_node]
+    def route_length(self, route: List[str]) -> float:
+        return sum(self.edges[(a, b)].length for a, b in zip(route, route[1:]))
 
-    # ──────────────────────────────────────
-    # Simulyatsiya qadami
-    # ──────────────────────────────────────
-    def step(self, dt: float = 1.0) -> List[dict]:
-        """
-        dt soniyalik vaqt o'tishi.
-        Barcha mashinalar o'rnini yangilaydi.
-        """
-        results = []
-        for agent in self.agents.values():
-            self._move_agent(agent, dt)
-            results.append(self._agent_to_dict(agent))
-        return results
 
-    def _move_agent(self, agent: VehicleAgent, dt: float):
-        if len(agent.route_nodes) < 2:
-            # Marshrut yo'q → yangi marshrut
-            start = random.choice(self.node_ids) if self.node_ids else None
-            if start:
-                agent.lat, agent.lng = self.node_coords.get(start, (agent.lat, agent.lng))
-                self._assign_route(agent, start)
-            return
+@dataclass
+class Vehicle:
+    id: str
+    type: str
+    route: List[str]
+    idx: int = 0                  # joriy segment: route[idx] → route[idx + 1]
+    pos: float = 0.0              # segment boshidan masofa, m
+    speed: float = 0.0            # m/s
+    factor: float = 1.0           # segment tezligiga nisbatan haydash koeffitsiyenti
+    emergency: bool = False
+    wait: float = 0.0             # joriy chorrahada svetofor kutishi, s
+    detected: bool = False        # joriy segmentdagi detektordan o'tdimi
+    stuck: float = 0.0            # qancha vaqtdan beri joyidan siljimagan
+    lat: float = 0.0
+    lng: float = 0.0
+    heading: float = 0.0
 
-        if agent.route_index >= len(agent.route_nodes) - 1:
-            # Manzilga yetdi
-            agent.trips_completed += 1
-            cur_node = agent.route_nodes[-1]
-            self._assign_route(agent, cur_node)
-            return
+    @property
+    def edge_key(self) -> Tuple[str, str]:
+        return self.route[self.idx], self.route[self.idx + 1]
 
-        cur_node  = agent.route_nodes[agent.route_index]
-        next_node = agent.route_nodes[agent.route_index + 1]
 
-        # Svetafor tekshirish
-        if self.signal_states.get(next_node) == "red" and not agent.is_emergency:
-            agent.waiting = True
-            agent.wait_seconds += dt
-            return
+def spawn_vehicle(net: RoadNetwork, vid: str, scatter: bool = True) -> Vehicle:
+    vtype = random.choices(list(VEHICLE_TYPES), weights=[w for w, _ in VEHICLE_TYPES.values()])[0]
+    route = net.random_route(net.random_node())
+    v = Vehicle(id=vid, type=vtype, route=route, factor=random.uniform(*VEHICLE_TYPES[vtype][1]))
+    if scatter:
+        v.idx = random.randrange(len(route) - 1)
+        v.pos = random.uniform(0, net.edges[v.edge_key].length * 0.8)
+    v.speed = net.edges[v.edge_key].speed * v.factor * 0.5
+    v.lat, v.lng, v.heading = net.edges[v.edge_key].point_at(v.pos)
+    return v
 
-        agent.waiting      = False
-        agent.wait_seconds = 0.0
 
-        # Segment uzunligini olish
-        edge_data = self.graph.edges.get((cur_node, next_node), {}) if self.graph else {}
-        seg_len_m = edge_data.get("length", 100.0)
-        seg_speed = edge_data.get("speed", agent.speed_kmh)
+# stop_line(edge_key, vehicle, distance_to_end) → to'xtash kerakmi
+StopRule = Callable[[Tuple[str, str], Vehicle, float], bool]
+# on_edge_exit(edge_key, vehicle) — segment oxiriga yetib o'tganda
+ExitHook = Callable[[Tuple[str, str], Vehicle], None]
 
-        # Tezlikni moslashtirish (tirbandlik bo'lsa kamaytirish)
-        effective_speed = min(agent.speed_kmh, seg_speed)
 
-        # Progress yangilash
-        distance_m = effective_speed / 3.6 * dt
-        progress_delta = distance_m / max(seg_len_m, 1.0)
+def move_vehicles(net: RoadNetwork, vehicles: List[Vehicle], dt: float,
+                  must_stop: StopRule, on_exit: ExitHook) -> None:
+    """Oddiy mashinalarni bir qadam harakatlantiradi (tez yordam alohida)."""
+    by_edge: Dict[Tuple[str, str], List[Vehicle]] = {}
+    for v in vehicles:
+        by_edge.setdefault(v.edge_key, []).append(v)
+    tail = {k: min(x.pos for x in vs) for k, vs in by_edge.items()}
 
-        agent.segment_progress += progress_delta
-        agent.total_distance_m += distance_m
+    for key, group in by_edge.items():
+        group.sort(key=lambda x: -x.pos)
+        leader: Optional[Vehicle] = None
+        for v in group:
+            edge = net.edges[key]
+            limit = math.inf
+            if leader is not None:
+                limit = leader.pos - MIN_GAP_M
+            elif v.idx + 2 < len(v.route):
+                nxt = (v.route[v.idx + 1], v.route[v.idx + 2])
+                if nxt in tail:
+                    limit = edge.length + tail[nxt] - MIN_GAP_M
+            if must_stop(key, v, edge.length - v.pos):
+                limit = min(limit, edge.length - STOP_OFFSET_M)
 
-        if agent.segment_progress >= 1.0:
-            # Keyingi segmentga o'tish
-            agent.segment_progress = 0.0
-            agent.route_index     += 1
-            agent.lat, agent.lng   = self.node_coords.get(next_node, (agent.lat, agent.lng))
-        else:
-            # Interpolatsiya
-            pos1 = self.node_coords.get(cur_node,  (agent.lat, agent.lng))
-            pos2 = self.node_coords.get(next_node, (agent.lat, agent.lng))
-            p    = agent.segment_progress
-            agent.lat = pos1[0] + (pos2[0] - pos1[0]) * p
-            agent.lng = pos1[1] + (pos2[1] - pos1[1]) * p
+            target = edge.speed * v.factor
+            v.speed = min(target, v.speed + ACCEL_MS2 * dt)
+            new_pos = v.pos + v.speed * dt
+            if new_pos > limit:
+                new_pos = max(v.pos, limit)
+                v.speed = (new_pos - v.pos) / dt
+            v.stuck = v.stuck + dt if new_pos - v.pos < 0.1 else 0.0
+            v.pos = new_pos
+            _advance(net, v, on_exit, must_stop)
+            v.lat, v.lng, v.heading = net.edges[v.edge_key].point_at(v.pos)
+            leader = v
 
-            # Yo'nalish (heading)
-            dlat = pos2[0] - pos1[0]
-            dlng = pos2[1] - pos1[1]
-            agent.heading = (math.degrees(math.atan2(dlng, dlat)) + 360) % 360
 
-    def _agent_to_dict(self, agent: VehicleAgent) -> dict:
-        return {
-            "id":         agent.vehicle_id,
-            "type":       agent.vehicle_type,
-            "lat":        round(agent.lat, 6),
-            "lng":        round(agent.lng, 6),
-            "speed":      round(agent.speed_kmh, 1),
-            "heading":    round(agent.heading, 1),
-            "emergency":  agent.is_emergency,
-            "waiting":    agent.waiting,
-        }
-
-    def get_stats(self) -> dict:
-        """Umumiy statistika"""
-        speeds  = [a.speed_kmh for a in self.agents.values() if not a.waiting]
-        waiting = sum(1 for a in self.agents.values() if a.waiting)
-        return {
-            "total_vehicles":    len(self.agents),
-            "waiting_vehicles":  waiting,
-            "average_speed":     round(sum(speeds) / len(speeds), 1) if speeds else 0,
-            "active_signals":    len(self.signal_states),
-            "green_signals":     sum(1 for s in self.signal_states.values() if s == "green"),
-        }
+def _advance(net: RoadNetwork, v: Vehicle, on_exit: ExitHook, must_stop: StopRule) -> None:
+    """Segment oxiridan oshgan masofani keyingi segment(lar)ga o'tkazadi."""
+    while v.pos >= net.edges[v.edge_key].length:
+        key = v.edge_key
+        on_exit(key, v)
+        v.pos -= net.edges[key].length
+        v.idx += 1
+        v.detected = False
+        if v.idx >= len(v.route) - 1:          # manzilga yetdi — yangi marshrut
+            v.route = net.random_route(v.route[-1])
+            v.idx = 0
+        edge = net.edges[v.edge_key]
+        if must_stop(v.edge_key, v, edge.length - v.pos):
+            v.pos = min(v.pos, max(edge.length - STOP_OFFSET_M, 0.0))
+            v.speed = min(v.speed, edge.speed * v.factor)
