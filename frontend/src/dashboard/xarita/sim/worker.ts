@@ -61,10 +61,11 @@ type Link = {
   stopBack: number // to‘xtash/yo‘l ber chizig‘i link oxiridan, m
   internal: boolean // svetoforli chorraha qutisi ichidagi bo‘lak — bu yerda to‘xtalmaydi
   junction: number // svetoforsiz chorraha (ustunlik qoidasi) indeksi, yo‘q bo‘lsa −1
+  inBox: number // svetoforli chorraha ichidagi bo‘lak — o‘sha chorraha indeksi, aks holda −1
   prio: number
   box: [number, number, number, number] // chegaralovchi to‘rtburchak (Merkator metri)
 }
-type Cluster = { offset: number; groups: number; nodes: string[] }
+type Cluster = { id: number; offset: number; groups: number; nodes: string[] }
 
 /* ---------- holat ---------- */
 let links: Link[] = []
@@ -100,6 +101,11 @@ const car = {
   wait: new Float32Array(MAX_CARS), // to‘xtab turgan jami vaqt, s
   odo: new Float32Array(MAX_CARS), // yurgan yo‘li, m
   held: new Float32Array(MAX_CARS), // boshqa oqimdagi mashinaga yo‘l berib turgan vaqt, s
+  still: new Float32Array(MAX_CARS), // uzluksiz to‘xtab turgan vaqt, s
+  // nega sekinlashdi (oxirgi qadam): 0 erkin, 1 oldidagi mashina, 2 svetofor, 3 ustunlik, 4 chiqish band,
+  // 5 yo‘l band, 6 chorraha tiqilgan, 7 kesishgan mashinaga yo‘l berdi, 8 keyingi ko‘chadagi navbat
+  why: new Uint8Array(MAX_CARS),
+  by: new Int32Array(MAX_CARS), // kimga qarab (7 va 1 da), yo‘q bo‘lsa −1
 }
 // har qadamdagi joy (haqiqiy metrlarda) va yo‘nalish birlik vektori
 const px = new Float64Array(MAX_CARS)
@@ -185,7 +191,7 @@ function add(out: Link[], index: Map<string, number>, tile: string, road: number
     y0 = Math.min(y0, ys[i])
     y1 = Math.max(y1, ys[i])
   }
-  out.push({ id, road, tile, from, to, lanes: Math.max(1, lanes), base, xs, ys, cum, len: cum[n - 1], k, vmax: (Math.min(r.s, 70) / 3.6) * 0.92, limit: r.s, name: r.nm ?? '', hw: r.h, out: [], outW: [], rev: -1, signal: null, stopBack: 0, internal: false, junction: -1, prio: rankOf(r.h), box: [x0, y0, x1, y1] })
+  out.push({ id, road, tile, from, to, lanes: Math.max(1, lanes), base, xs, ys, cum, len: cum[n - 1], k, vmax: (Math.min(r.s, 70) / 3.6) * 0.92, limit: r.s, name: r.nm ?? '', hw: r.h, out: [], outW: [], rev: -1, signal: null, stopBack: 0, internal: false, junction: -1, inBox: -1, prio: rankOf(r.h), box: [x0, y0, x1, y1] })
 }
 
 const rankOf = (hw: string) => (RANK[hw.replace('_link', '')] ?? 1) - (hw.endsWith('_link') ? 0.5 : 0)
@@ -226,6 +232,7 @@ function buildJunctions() {
     l.signal = null
     l.internal = false
     l.junction = -1
+    l.inBox = -1
     l.stopBack = 0
   }
   clusters = []
@@ -259,7 +266,8 @@ function buildJunctions() {
     if (!inc.length) continue
     // asosiy o‘q — eng uzun kiruvchi yo‘l yo‘nalishi; unga ±45° — 0-guruh, qolgani — 1-guruh
     const ref = endAngle(inc.reduce((a, b) => (b.len > a.len ? b : a)))
-    const cl: Cluster = { offset: seed(ids.sort()[0]) % 60, groups: 1, nodes: ids }
+    const cl: Cluster = { id: clusters.length, offset: seed(ids.sort()[0]) % 60, groups: 1, nodes: ids }
+    for (const l of links) if (l.internal && box.has(l.to) && box.has(l.from)) l.inBox = cl.id
     const groupOf = (l: Link): 0 | 1 => {
       const d = Math.abs(angleDiff(endAngle(l), ref))
       return d < Math.PI / 4 || d > (3 * Math.PI) / 4 ? 0 : 1
@@ -392,6 +400,7 @@ function spawn(c: number, anywhere = false) {
     car.wait[c] = 0
     car.odo[c] = 0
     car.held[c] = 0
+    car.still[c] = 0
     // to‘rga darhol qo‘shiladi — shu to‘ldirishdagi keyingi mashina uning ustiga tushmasin
     const [x, y] = at(l, s, car.latFrom[c])
     px[c] = x * l.k
@@ -461,6 +470,13 @@ function step() {
   t += DT
   const lanes = lanesNow()
   locate()
+  // chorraha ichida qotib qolgan mashinalar soni — bor bo‘lsa, yashil bo‘lsa ham yangilari kirmaydi
+  const jam = new Uint16Array(clusters.length)
+  for (let c = 0; c < MAX_CARS; c++) {
+    if (!car.alive[c]) continue
+    const b = boxOf(c)
+    if (b >= 0 && car.still[c] > 1) jam[b]++
+  }
   const acc = new Float64Array(MAX_CARS)
   // svetoforsiz chorrahalar: har biriga yaqinlashayotganlar ichidan bittasi o‘tadi —
   // kattaroq ko‘chadagi, teng bo‘lsa eng tez yetib keladigani
@@ -471,6 +487,8 @@ function step() {
     const c = list[0]
     const toEnd = l.len - car.s[c]
     if (toEnd > APPROACH_M || toEnd < l.stopBack - 0.5) continue
+    // o‘zi boshqa sabab bilan (chiqish yoki yo‘l band, kesishgan mashina) turib qolgan — navbat keyingisiga
+    if ((car.why[c] === 4 || car.why[c] === 5 || car.why[c] === 7) && car.still[c] > 2) continue
     const eta = toEnd / Math.max(car.v[c], 1)
     const w = winner.get(l.junction)
     if (!w || l.prio > w.rank || (l.prio === w.rank && eta < w.eta)) winner.set(l.junction, { link: l.id, rank: l.prio, eta })
@@ -483,37 +501,48 @@ function step() {
       const v = car.v[c]
       let gap = Infinity
       let dv = 0
+      car.why[c] = 0
+      car.by[c] = -1
       if (i > 0) {
         const lead = list[i - 1]
         gap = car.s[lead] - car.s[c] - CAR_LEN
         dv = v - car.v[lead]
+        car.why[c] = 1
+        car.by[c] = lead
       } else {
         const toEnd = l.len - car.s[c]
         const toLine = toEnd - l.stopBack // to‘xtash chizig‘igacha; manfiy — chiziqdan o‘tib bo‘lgan
         const nx = car.next[c]
         let stop = false
+        let why = 0
         // qizil yoki (to‘xtay oladigan masofada) sariq — to‘xtash chizig‘ida “devor”
         if (l.signal && toLine > -0.5) {
           const st = state(l.signal)
           stop = st === 0 || (st === 1 && toLine > (v * v) / (2 * B_COMF))
+          if (stop) why = 2
+          // chorrahani to‘sma: ichida tiqilib qolgan mashina bor — chiziqda kutamiz (to‘xtay olsak)
+          if (!stop && jam[l.signal.cluster.id] && toLine > (v * v) / 8) [stop, why] = [true, 6]
         }
         // svetoforsiz chorraha: navbat bizda emas yoki chorraha boshqa oqimga band
         if (!stop && l.junction >= 0 && toLine > -0.5 && toEnd < APPROACH_M) {
           const j = l.junction
           const free = t >= jBusyUntil[j] || jBusyLink[j] === l.id
           stop = !free || winner.get(j)?.link !== l.id
+          if (stop) why = 3
         }
         // chorrahani to‘sma: chiqish yo‘lining boshi band bo‘lsa — chiziqda kutiladi
         if (!stop && nx >= 0 && (l.signal || l.junction >= 0) && toLine > -0.5) {
           const exit = lanes.get(nx * 8 + Math.min(lane, links[nx].lanes - 1))
           const last = exit?.[exit.length - 1]
           stop = last !== undefined && car.s[last] < CAR_LEN + 4 && car.v[last] < 2
+          if (stop) why = 4
           // chorraha ichida yo‘limizda to‘xtab qolgan mashina bor — qutiga kirmay, chiziqda kutamiz
-          if (!stop && toLine < 25) stop = pathBlocked(c, Math.max(toLine, 0), (links[nx].internal ? links[nx].len : 0) + 8)
+          if (!stop && toLine < 25 && pathBlocked(c, Math.max(toLine, 0), (links[nx].internal ? links[nx].len : 0) + 8)) [stop, why] = [true, 5]
         }
         if (stop) {
           gap = toLine
           dv = v
+          car.why[c] = why
         }
         if (nx >= 0 && gap === Infinity) {
           const nl = links[nx]
@@ -522,6 +551,8 @@ function step() {
             const last = back[back.length - 1]
             gap = toEnd + car.s[last] - CAR_LEN
             dv = v - car.v[last]
+            car.why[c] = 8
+            car.by[c] = last
           }
         }
       }
@@ -543,8 +574,15 @@ function step() {
     if (v < 0.5) {
       stopped++
       car.wait[c] += DT
-    }
+      car.still[c] += DT
+    } else car.still[c] = 0
     let l = links[car.link[c]]
+    // oxirgi chora: chorraha ichida 40 s qimirlamagan mashina (o‘zaro tiqilish) — olib, boshqa joyda chiqariladi
+    if (car.still[c] > 40 && boxOf(c) >= 0) {
+      car.alive[c] = 0
+      spawn(c)
+      continue
+    }
     while (car.s[c] >= l.len) {
       const nx = car.next[c]
       if (nx < 0 || !inView(links[nx])) {
@@ -586,6 +624,17 @@ function step() {
    yo‘lagiga (kuzov eni + zaxira) tushadigan mashinaga IDM bilan tormozlaydi. Ikkalasi bir-birining yo‘lida
    bo‘lsa — kesishuv nuqtasiga uzoqrog‘i yo‘l beradi (navbat bilan, “zanjir” kabi). */
 let grid = new Map<number, number[]>()
+/* o‘z chizig‘ida kutib turgan mashina (svetofor, navbat, band chiqish) — chorrahaga kirmagan, hech kimning yo‘lini to‘smaydi */
+const atLine = (c: number) => car.why[c] >= 2 && car.why[c] <= 6
+
+/* mashina svetoforli chorraha ichidami: quti ichidagi bo‘lakda yoki to‘xtash chizig‘idan o‘tib bo‘lgan */
+function boxOf(c: number) {
+  const l = links[car.link[c]]
+  if (l.inBox >= 0) return l.inBox
+  if (l.signal && car.s[c] > l.len - l.stopBack + 1) return l.signal.cluster.id
+  return -1
+}
+
 function locate() {
   grid = new Map()
   for (let c = 0; c < MAX_CARS; c++) {
@@ -626,7 +675,7 @@ function ahead(a: number, b: number, look: number): [number, number] | null {
 function pathBlocked(a: number, from: number, range: number) {
   let hit = false
   near(a, from + range, (b) => {
-    if (hit || car.v[b] > 1.5) return
+    if (hit || car.v[b] > 1.5 || atLine(b)) return
     const h = ahead(a, b, from + range)
     if (h && h[0] > from) hit = true
   })
@@ -645,8 +694,10 @@ function yieldToCrossing(acc: Float64Array) {
     const look = Math.min(30, 6 + v * 1.6)
     let best = Infinity
     let bestDv = 0
+    let who = -1
     near(a, look, (b) => {
       if (car.link[b] === car.link[a] && car.lane[b] === car.lane[a]) return // bo‘lakdagi navbat — IDM’da
+      if (atLine(b) && !atLine(a)) return // u chiziqda kutyapti — biz allaqachon harakatdamiz
       const hit = ahead(a, b, look)
       if (!hit) return
       const back = ahead(b, a, Math.min(30, 6 + car.v[b] * 1.6))
@@ -655,12 +706,15 @@ function yieldToCrossing(acc: Float64Array) {
       if (hit[1] < best) {
         best = hit[1]
         bestDv = v - car.v[b] * (hx[a] * hx[b] + hy[a] * hy[b])
+        who = b
       }
     })
     if (best === Infinity) continue
     const f = idm(v, car.v0[a], best, bestDv)
     if (f < acc[a]) {
       acc[a] = f
+      car.why[a] = 7
+      car.by[a] = who
       if (v < 1) car.held[a] += DT
     }
   }
@@ -825,6 +879,18 @@ onmessage = (e: MessageEvent<ToWorker>) => {
     fill()
   } else if (m.type === 'inspect') {
     inspect = m.slot
+  } else if (m.type === 'debug') {
+    // dev: uzoq turgan mashinalar nega turibdi — sabablar soni va namunalar
+    const counts: Record<number, number> = {}
+    const sample: unknown[] = []
+    for (let c = 0; c < MAX_CARS; c++) {
+      if (!car.alive[c] || car.still[c] < 10) continue
+      counts[car.why[c]] = (counts[car.why[c]] ?? 0) + 1
+      const l = links[car.link[c]]
+      if (sample.length < 30)
+        sample.push({ c, why: car.why[c], by: car.by[c], byWhy: car.by[c] >= 0 ? car.why[car.by[c]] : -1, still: Math.round(car.still[c]), box: boxOf(c), internal: l.internal, sig: !!l.signal, j: l.junction, toEnd: Math.round(l.len - car.s[c]), stopBack: Math.round(l.stopBack), len: Math.round(l.len), next: car.next[c] })
+    }
+    postMessage({ type: 'debug', counts, sample })
   } else if (m.type === 'density') {
     perLaneKm = m.perLaneKm
     fill()

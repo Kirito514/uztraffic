@@ -31,6 +31,7 @@ export type ToWorker =
   // mashina ko‘z oldida paydo bo‘lmasin va yo‘qolmasin — tug‘ilish va olib tashlash faqat ekrandan tashqarida
   | { type: 'view'; box: Rect; screen: Rect }
   | { type: 'density'; perLaneKm: number }
+  | { type: 'debug' } // dev: tiqilib qolgan mashinalar tahlili
   | { type: 'inspect'; slot: number } // tanlangan mashina (−1 — hech biri): uning tafsiloti har kadrda keladi
 
 export type CarState = 'red' | 'queue' | 'accel' | 'brake' | 'cruise'
@@ -56,6 +57,7 @@ export type FromWorker =
   | Frame
   | { type: 'marks'; marks: Float32Array } // grafik o‘zgarganda bir marta: to‘xtash chiziqlari va zebralar
   // har soniyada: faol yo‘llarning tirbandlik darajasi (lv: 0 erkin, 1 sekin, 2 tirband, 3 tiqilin), o — o‘qdan siljish, w — eni (m)
+  | { type: 'debug'; counts: Record<number, number>; sample: unknown[] }
   | { type: 'traffic'; roads: GeoJSON.FeatureCollection<GeoJSON.LineString, { lv: number; o: number; w: number }> }
 
 export type Frame = {

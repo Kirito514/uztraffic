@@ -315,6 +315,7 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
     const cars = createCarLayer(import.meta.env.DEV ? (st) => ((window as unknown as { __sim: unknown }).__sim = st) : undefined)
     worker.onmessage = (e: MessageEvent<FromWorker>) => {
       if (e.data.type === 'marks') return cars.setMarks(e.data.marks)
+      if (e.data.type === 'debug') return void Object.assign(window, { __debug: e.data })
       if (e.data.type === 'traffic') return (m.getSource('traffic') as GeoJSONSource | undefined)?.setData(e.data.roads)
       cars.push(e.data)
       if (slotRef.current < 0) return
@@ -327,7 +328,7 @@ export function LiveMap({ mapStyle, labels, lanes, cars, traffic, density, selec
       }
     }
     sim.current = { worker, cars }
-    if (import.meta.env.DEV) Object.assign(window, { __oqimMap: m, __oqimCars: cars }) // dev: konsoldan tekshirish uchun
+    if (import.meta.env.DEV) Object.assign(window, { __oqimMap: m, __oqimCars: cars, __oqimWorker: worker }) // dev: konsoldan tekshirish uchun
     send({ type: 'density', perLaneKm: pending.current.density })
     const beforeId = m.getStyle().layers.find((l) => l.type === 'symbol')?.id
     m.addLayer(cars.layer, beforeId)
